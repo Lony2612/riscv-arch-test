@@ -29,4 +29,4 @@
 #include "rvtest_trap_handler.h"
 #include "rvtest_invisible_trap_handler.h"
 #include "rvtest_failure_code.h"
-#include "rvtest_setup.h"
+#include "rvtest_setup-wk.h"

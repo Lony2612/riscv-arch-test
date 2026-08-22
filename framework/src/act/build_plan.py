@@ -182,6 +182,7 @@ def gen_compile_tasks(
     march_flags = toolchain.march_flags(
         xlen,
         test_metadata.march,
+        # "rv64imafdcv_zicntr_zicsr_zifencei_zihpm_zfh_zba_zbb_zbc_zbs",
         assembly=not test_metadata.is_c_test,
         e_ext=test_metadata.e_ext,
     )
@@ -215,8 +216,10 @@ def gen_compile_tasks(
             *signature_compile_flags,
             f"-DTEST_FLEN={test_flen}",
             f'-DTEST_FILE="{test_name.name}"',
+            f'-DTARGET_IS_SAIL',
             *test_sources,
         ]
+        # print(f"{' '.join(sig_elf_cmd)}")
         tasks.append(
             BuildTask(
                 outputs=(sig_elf,),

@@ -371,6 +371,44 @@
           "supports_pte_write": true
         },
         "include_in_device_tree": true
+      },
+      // clint
+      {
+        "base": {
+          "len": 64,
+          "value": "0x00400000"
+        },
+        "size": {
+          "len": 64,
+          "value": "0x00100000"
+        },
+        "attributes": {
+          "mem_type": "IOMemory",
+          "cacheable": true,
+          "coherent": false,
+          "executable": true,
+          "readable": true,
+          "writable": true,
+          "read_idempotent": true,
+          "write_idempotent": true,
+          "misaligned_exceptions": {
+            "load_store": {
+              "None": null
+            },
+            "vector": {
+              "None": null
+            },
+            "amo": "AccessFault"
+          },
+          "atomic_support": "AMONone",
+          "misaligned_atomicity_granule_size_exp": 0,
+          "vector_misaligned_atomicity_granule_size_exp": 0,
+          "reservability": "RsrvNone",
+          "supports_cbo_zero": false,
+          "supports_pte_read": false,
+          "supports_pte_write": false
+        },
+        "include_in_device_tree": true
       }
     ]
   },
@@ -786,7 +824,7 @@
       "supported": true
     },
     "Zkt": {
-      "supported": true
+      "supported": false
     },
     "Zhinx": {
       "supported": false
@@ -869,7 +907,8 @@
       "supported": false
     },
     "Svnapot": {
-      "supported": false
+      "supported": true,
+      "reserved_behavior": "PageFault"
     },
     "Ssnpm": {
       "supported": false,
@@ -924,7 +963,8 @@
       "mcid_length": 12
     },
     "Svpbmt": {
-      "supported": false
+      "supported": true,
+      "reserved_behavior": "PageFault"
     },
     "Svvptc": {
       "supported": false
