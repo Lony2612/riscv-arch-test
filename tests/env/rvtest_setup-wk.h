@@ -12,7 +12,8 @@
 /**** - defines rvtest_code_begin global label                                          ****/
 /*******************************************************************************************/
 .include "core_init.h"
-.set MP_DONE_ADDR, 0x9f0f2000
+.set TB_PRINT_ADDR, 0x9ff00000
+.set MP_DONE_ADDR,  0x9f0f2000
 .set TOTAL_CORE_NUM, 1
 .set RERI_INT_SEL, 0
 
@@ -38,33 +39,36 @@
   .p2align UNROLLSZ
   .option norvc
 
-  // # For MP test, all cores do initialization
-  // # TOTAL_CORE_NUM is passed from compiler options
-  li x3, TOTAL_CORE_NUM
-  li x4, 0x1
-  blt x4, x3, core_init_begin
+  // Include model specific boot code
+  // potentially long call to code after the data segment.
+  #ifdef TARGET_IS_SAIL
+    LA(ra, rvmodel_boot)
+    jalr ra
+  #else
+    // # For MP test, all cores do initialization
+    // # TOTAL_CORE_NUM is passed from compiler options
+    li x3, TOTAL_CORE_NUM
+    li x4, 0x1
+    blt x4, x3, core_init_begin
 
-  // # For UP test, only core0 do initialization
-  csrr x3,mhartid
-  beqz x3, core_init_begin
-  wfi
+    // # For UP test, only core0 do initialization
+    csrr x3,mhartid
+    beqz x3, core_init_begin
+    wfi
 
-core_init_begin:
-  #ifndef TARGET_IS_SAIL
+    core_init_begin:
     // enable extension
     li  x3, 0x400000
     csrs 0x7c0, x3
-  #endif
 
-  // # enable fpu
-  li   x3, 0x6000
-  csrs mstatus,x3
+    // # enable fpu
+    li   x3, 0x6000
+    csrs mstatus,x3
 
-  // # enable vector
-  li   x3, 0x200
-  csrs mstatus,x3
-  
-  #ifndef TARGET_IS_SAIL
+    // # enable vector
+    li   x3, 0x200
+    csrs mstatus,x3
+
     // enable unalign
     li x3, 0x8000
     csrs 0x7c0,x3
@@ -75,73 +79,74 @@ core_init_begin:
 
     // msmpr
     csrs 0x7f3, 0x1
+
+    RVTEST_INIT_REGS // Put deterministic values in each register
+
+    // ## PART 2: initialize stack pointer & ppn
+    csrr x3,  mhartid
+    li x4,  1
+
+    ENABLE_HYPER
+
+    .global cpu_0_sp	
+    cpu_0_sp:
+    la x2, __stack_top
+    li x31,0x1000
+    .option push
+    .option arch, +m
+    mul x31,x31,x3
+    .option pop
+    add x2,x31,x2
+    csrw mscratch,x2
+    csrw sscratch,x2
+    // csrw vsscratch, x2
+
+    // # PART 3:initialize mtvec value 
+    la    x3,trap_Mhandler
+    csrw  mtvec,x3
+    la    x3,trap_Shandler
+    csrw  stvec,x3
+
+    .if HWCFIG_HYPERVISOR==1
+      ENABLE_HYPER
+      la    x3,trap_Hhandler
+      csrw  vstvec,x3
+    .endif
+
+    // # enable mie
+    li   x3, 0x8
+    csrs mstatus,x3
+
+    // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
+    li x3, 0x70013
+    csrs 0x7c2, x3 // #mcor
+
+    // #  enable ICACHE,DCACHE,BHT, BTB, IBP, RAS and WA
+    li x3, 0x11ff
+    csrs 0x7c1, x3 // #mhcr
+
+    .global after_l2en 
+    after_l2en:
+    li x3, 0x11ff
+    csrs 0x7c1, x3 // #mhcr
+
+    li  x3, 0x43e14c30c
+    csrs  0x7c5, x3 // #mhint
+
+    // 
+    li x3, 0xe0001419
+    csrs  0x7c3, x3
+
+    SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
+    .global RAND_ME_INT_BEG
+    RAND_ME_INT_BEG:
+    mret
+    .global RAND_ME_INT_END
+    RAND_ME_INT_END:
+    nop
+    nop
+    j rvtest_code_begin
   #endif
-
-  // Include model specific boot code
-  // potentially long call to code after the data segment.
-  LA(ra, rvmodel_boot)
-  jalr ra
-
-  // ## PART 2: initialize stack pointer & ppn
-  csrr x3,  mhartid
-  li x4,  1
-
-  ENABLE_HYPER
-
-  .global cpu_0_sp	
-cpu_0_sp:
-  la x2, __stack_top
-  li x31,0x1000
-  // mul x31,x31,0x1
-  add x2,x31,x2
-  csrw mscratch,x2
-  csrw sscratch,x2
-  csrw vsscratch, x2
-
-  // # PART 3:initialize mtvec value 
-  la    x3,trap_Mhandler
-  csrw  mtvec,x3
-  la    x3,trap_Shandler
-  csrw  stvec,x3
-
-.if HWCFIG_HYPERVISOR==1
-  ENABLE_HYPER
-  la    x3,trap_Hhandler
-  csrw  vstvec,x3
-.endif
-
-  // # enable mie
-  li   x3, 0x8
-  csrs mstatus,x3
-
-  // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
-  li x3, 0x70013
-  csrs 0x7c2, x3 // #mcor
-
-  // #  enable ICACHE,DCACHE,BHT, BTB, IBP, RAS and WA
-  li x3, 0x11ff
-  csrs 0x7c1, x3 // #mhcr
-
-  .global after_l2en 
-after_l2en:
-  li x3, 0x11ff
-  csrs 0x7c1, x3 // #mhcr
-
-  li  x3, 0x43e14c30c
-  csrs  0x7c5, x3 // #mhint
-
-  // 
-  li x3, 0xe0001419
-  csrs  0x7c3, x3
-
-  SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
-  .global RAND_ME_INT_BEG
-RAND_ME_INT_BEG:
-  mret
-  .global RAND_ME_INT_END
-RAND_ME_INT_END:
-  nop
-  nop
 
   // Create new section so that .{b/p2}align directives in the test code don't affect the
   // entry point address. The assembler increases a section's overall alignment to
@@ -182,6 +187,8 @@ RAND_ME_INT_END:
   // invoked unless there is STANDARD_SM_SUPPORTED.  A user with custom M-mode will need
   // to reimplement many parts of this macro.
   rvtest_code_end:
+  nop
+  nop
 
   // Restore xTVEC, trampoline, regs for each mode in opposite order that they were saved.
   // The RVTEST_GOTO_MMODE sits BELOW the cleanup_epilogs label (not at rvtest_code_end)
@@ -189,6 +196,9 @@ RAND_ME_INT_END:
   // unexpected-interrupt handlers, which can run in S/U/VS/VU mode. The epilogs read
   // mscratch and other M-mode CSRs, so every entry path must switch to M-mode first.
   cleanup_epilogs:
+    #ifndef TARGET_IS_SAIL
+      j rvmodel_halt_pass
+    #endif
     #ifdef STANDARD_SM_SUPPORTED
       RVTEST_GOTO_MMODE
       #ifdef S_SUPPORTED
@@ -366,7 +376,7 @@ RAND_ME_INT_END:
     LA (T1, rvtest_trap_count)
     SREG zero, 0(T1)
 
-    RVTEST_INIT_REGS // Put deterministic values in each register
+    // RVTEST_INIT_REGS // Put deterministic values in each register
 
     LA (T1, rvtest_code_begin)
     jr T1                         // Jump back to the start of the test

@@ -62,32 +62,32 @@
 # _R1, _R2, and _R3 can be used as temporary registers if needed.
 # Do not modify any other registers (or make sure to restore them).
 # Can be empty or left undefined if no initialization is needed.
-#define RVMODEL_IO_INIT(_R1, _R2, _R3) \
-  uart_init:                ;\
-    li _R1, UART_LCR         ; /* Load address of UART LCR */    \
-    li _R2, 3                ; /* 8-bit characters, 1 stop bit, no parity */ \
-    sb _R2, 0(_R1)           ; \
+#define RVMODEL_IO_INIT(_R1, _R2, _R3)
+  // uart_init:                ;\
+  //   li _R1, UART_LCR         ; /* Load address of UART LCR */    \
+  //   li _R2, 3                ; /* 8-bit characters, 1 stop bit, no parity */ \
+  //   sb _R2, 0(_R1)           ; \
 
 # Prints a null-terminated string using a DUT specific mechanism.
 # A pointer to the string is passed in _STR_PTR.
 # _R1, _R2, and _R3 can be used as temporary registers if needed.
 # Do not modify any other registers (or make sure to restore them).
-#define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR)               \
-1:                           ;                       \
-  lbu _R1, 0(_STR_PTR)        ;/* Load byte */        \
-  beqz _R1, 3f                ;/* Exit if null */     \
-2: /* uart_putc */           ;                      \
-  li _R2, UART_LSR ;\
-  4: /* uart_putc_wait_busy */ \
-    lbu _R3, 0(_R2) ;\
-    andi _R3, _R3, 0x20 ;/* check line status register bit 5 */ \
-    beqz _R3, 4b ;/* wait until Transmit Holding Register Empty is set */ \
-  /* uart_putc_send */ \
-    li _R2, UART_THR ; /* transmit character */ \
-    sb _R1, 0(_R2) ;\
-  addi _STR_PTR, _STR_PTR, 1 ;/* Next char */        \
-  j 1b                       ;/* Loop */             \
-3:
+#define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR)
+// 1:                           ;                       \
+//   lbu _R1, 0(_STR_PTR)        ;/* Load byte */        \
+//   beqz _R1, 3f                ;/* Exit if null */     \
+// 2: /* uart_putc */           ;                      \
+//   li _R2, UART_LSR ;\
+//   4: /* uart_putc_wait_busy */ \
+//     lbu _R3, 0(_R2) ;\
+//     andi _R3, _R3, 0x20 ;/* check line status register bit 5 */ \
+//     beqz _R3, 4b ;/* wait until Transmit Holding Register Empty is set */ \
+//   /* uart_putc_send */ \
+//     li _R2, UART_THR ; /* transmit character */ \
+//     sb _R1, 0(_R2) ;\
+//   addi _STR_PTR, _STR_PTR, 1 ;/* Next char */        \
+//   j 1b                       ;/* Loop */             \
+// 3:
 
 ##### Access Fault #####
 
