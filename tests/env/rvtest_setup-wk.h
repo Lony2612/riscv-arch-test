@@ -12,10 +12,6 @@
 /**** - defines rvtest_code_begin global label                                          ****/
 /*******************************************************************************************/
 .include "core_init.h"
-.set TB_PRINT_ADDR, 0x9ff00000
-.set MP_DONE_ADDR,  0x9f0f2000
-.set TOTAL_CORE_NUM, 1
-.set RERI_INT_SEL, 0
 
 .macro RVTEST_BEGIN
   // Set text section for code begin
@@ -41,111 +37,12 @@
 
   // Include model specific boot code
   // potentially long call to code after the data segment.
-  #ifdef TARGET_IS_SAIL
+  #ifndef TARGET_IS_SAIL
+    WKMODEL_BOOT
+  #else
+    // j rvtest_code_begin
     LA(ra, rvmodel_boot)
     jalr ra
-  #else
-    // # For MP test, all cores do initialization
-    // # TOTAL_CORE_NUM is passed from compiler options
-    li x3, TOTAL_CORE_NUM
-    li x4, 0x1
-    blt x4, x3, core_init_begin
-
-    // # For UP test, only core0 do initialization
-    csrr x3,mhartid
-    beqz x3, core_init_begin
-    wfi
-
-    core_init_begin:
-    // enable extension
-    li  x3, 0x400000
-    csrs 0x7c0, x3
-
-    // # enable fpu
-    li   x3, 0x6000
-    csrs mstatus,x3
-
-    // # enable vector
-    li   x3, 0x200
-    csrs mstatus,x3
-
-    // enable unalign
-    li x3, 0x8000
-    csrs 0x7c0,x3
-
-    // mxstatus
-    li  x3, 0x638000
-    csrs 0x7c0, x3
-
-    // msmpr
-    csrs 0x7f3, 0x1
-
-    RVTEST_INIT_REGS // Put deterministic values in each register
-
-    // ## PART 2: initialize stack pointer & ppn
-    csrr x3,  mhartid
-    li x4,  1
-
-    ENABLE_HYPER
-
-    .global cpu_0_sp	
-    cpu_0_sp:
-    la x2, __stack_top
-    li x31,0x1000
-    .option push
-    .option arch, +m
-    mul x31,x31,x3
-    .option pop
-    add x2,x31,x2
-    csrw mscratch,x2
-    csrw sscratch,x2
-    // csrw vsscratch, x2
-
-    // # PART 3:initialize mtvec value 
-    la    x3,trap_Mhandler
-    csrw  mtvec,x3
-    la    x3,trap_Shandler
-    csrw  stvec,x3
-
-    .if HWCFIG_HYPERVISOR==1
-      ENABLE_HYPER
-      la    x3,trap_Hhandler
-      csrw  vstvec,x3
-    .endif
-
-    // # enable mie
-    li   x3, 0x8
-    csrs mstatus,x3
-
-    // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
-    li x3, 0x70013
-    csrs 0x7c2, x3 // #mcor
-
-    // #  enable ICACHE,DCACHE,BHT, BTB, IBP, RAS and WA
-    li x3, 0x11ff
-    csrs 0x7c1, x3 // #mhcr
-
-    .global after_l2en 
-    after_l2en:
-    li x3, 0x11ff
-    csrs 0x7c1, x3 // #mhcr
-
-    li  x3, 0x43e14c30c
-    csrs  0x7c5, x3 // #mhint
-
-    // 
-    li x3, 0xe0001419
-    csrs  0x7c3, x3
-
-    SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
-    .global RAND_ME_INT_BEG
-    RAND_ME_INT_BEG:
-    mret
-    .global RAND_ME_INT_END
-    RAND_ME_INT_END:
-    nop
-    nop
-    j rvtest_code_begin
   #endif
 
   // Create new section so that .{b/p2}align directives in the test code don't affect the
@@ -161,6 +58,8 @@
   // Start of test
   .global rvtest_code_begin
   rvtest_code_begin:
+  nop
+  nop
 
   .option pop
 .endm
@@ -307,12 +206,12 @@
   .pushsection .text.rvmodel,"ax",@progbits
   // Model specific boot code
   rvmodel_boot:
-    #ifdef RVMODEL_BOOT
-      RVMODEL_BOOT
-    #endif
-    #ifdef RVMODEL_IO_INIT
-      RVMODEL_IO_INIT(T1, T2, T3)
-    #endif
+    // #ifdef RVMODEL_BOOT
+    //   RVMODEL_BOOT
+    // #endif
+    // #ifdef RVMODEL_IO_INIT
+    //   RVMODEL_IO_INIT(T1, T2, T3)
+    // #endif
 
     // boot to the lowest supported privilege mode unless a higher mode is specified by BOOT_TO_MMODE or BOOT_TO_SMODE
     // always boot to at least M-mode
@@ -376,7 +275,9 @@
     LA (T1, rvtest_trap_count)
     SREG zero, 0(T1)
 
-    // RVTEST_INIT_REGS // Put deterministic values in each register
+    #ifdef TARGET_IS_SAIL
+      RVTEST_INIT_REGS // Put deterministic values in each register
+    #endif
 
     LA (T1, rvtest_code_begin)
     jr T1                         // Jump back to the start of the test
@@ -1227,8 +1128,8 @@ power_down_cnt:
 // restores the test's real march. Supersets are harmless: only the init instructions
 // are emitted inside the block. See rv..imafdcv (V implies zve64d->d->f->m).
 #if __riscv_xlen == 64
-  #define RVTEST_FP_INIT_ARCH  rv64if
-  #define RVTEST_VEC_INIT_ARCH rv64imfv
+  #define RVTEST_FP_INIT_ARCH  rv64ifd
+  #define RVTEST_VEC_INIT_ARCH rv64imfdv
 #else
   #define RVTEST_FP_INIT_ARCH  rv32if
   #define RVTEST_VEC_INIT_ARCH rv32imfv
@@ -1279,38 +1180,38 @@ power_down_cnt:
   #ifdef F_SUPPORTED
     .option push
     .option arch, RVTEST_FP_INIT_ARCH
-    fmv.w.x f0, x0
-    fmv.w.x f1, x0
-    fmv.w.x f2, x0
-    fmv.w.x f3, x0
-    fmv.w.x f4, x0
-    fmv.w.x f5, x0
-    fmv.w.x f6, x0
-    fmv.w.x f7, x0
-    fmv.w.x f8, x0
-    fmv.w.x f9, x0
-    fmv.w.x f10, x0
-    fmv.w.x f11, x0
-    fmv.w.x f12, x0
-    fmv.w.x f13, x0
-    fmv.w.x f14, x0
-    fmv.w.x f15, x0
-    fmv.w.x f16, x0
-    fmv.w.x f17, x0
-    fmv.w.x f18, x0
-    fmv.w.x f19, x0
-    fmv.w.x f20, x0
-    fmv.w.x f21, x0
-    fmv.w.x f22, x0
-    fmv.w.x f23, x0
-    fmv.w.x f24, x0
-    fmv.w.x f25, x0
-    fmv.w.x f26, x0
-    fmv.w.x f27, x0
-    fmv.w.x f28, x0
-    fmv.w.x f29, x0
-    fmv.w.x f30, x0
-    fmv.w.x f31, x0
+    fmv.d.x f0, x0
+    fmv.d.x f1, x0
+    fmv.d.x f2, x0
+    fmv.d.x f3, x0
+    fmv.d.x f4, x0
+    fmv.d.x f5, x0
+    fmv.d.x f6, x0
+    fmv.d.x f7, x0
+    fmv.d.x f8, x0
+    fmv.d.x f9, x0
+    fmv.d.x f10, x0
+    fmv.d.x f11, x0
+    fmv.d.x f12, x0
+    fmv.d.x f13, x0
+    fmv.d.x f14, x0
+    fmv.d.x f15, x0
+    fmv.d.x f16, x0
+    fmv.d.x f17, x0
+    fmv.d.x f18, x0
+    fmv.d.x f19, x0
+    fmv.d.x f20, x0
+    fmv.d.x f21, x0
+    fmv.d.x f22, x0
+    fmv.d.x f23, x0
+    fmv.d.x f24, x0
+    fmv.d.x f25, x0
+    fmv.d.x f26, x0
+    fmv.d.x f27, x0
+    fmv.d.x f28, x0
+    fmv.d.x f29, x0
+    fmv.d.x f30, x0
+    fmv.d.x f31, x0
     .option pop
   #endif
 

@@ -1,12 +1,13 @@
-# failure_code.h
-# riscv-arch-test assembly test failure handling code
-# Jordan Carlin jcarlin@hmc.edu October 2025
-# SPDX-License-Identifier: Apache-2.0
+// # failure_code.h
+// # riscv-arch-test assembly test failure handling code
+// # Jordan Carlin jcarlin@hmc.edu October 2025
+// # SPDX-License-Identifier: Apache-2.0
 // Macro to define failure detection code (functions)
 // This is instantiated after test code near the end of RVTEST_CODE_END in test_setup.h
 .macro RVTEST_FAILURE_CODE
     # Log failure. DEFAULT_LINK_REG (x5) contains return address of jal from the failure and DEFAULT_TEMP_REG (x4) is a vacant temporary register
     failedtest_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG) # store return address
         SREG x1, 8(DEFAULT_TEMP_REG)                # save x1 early (used for failure_type)
@@ -15,6 +16,7 @@
 
     # Log failure. x8 contains return address of jal from the failure and x7 is a vacant temporary register
     failedtest_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)               # store return address
         SREG DEFAULT_TEMP_REG, 32(x7) # save DEFAULT_TEMP_REG
@@ -28,6 +30,7 @@
 
     # Log failure. x14 contains return address of jal from the failure and x13 is a vacant temporary register
     failedtest_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)              # store return address
         SREG DEFAULT_TEMP_REG, 32(x13)  # save DEFAULT_TEMP_REG
@@ -42,6 +45,7 @@
     # Log failure. x7 contains return address of jal from the failure and x9 is a vacant temporary register.
     # x6 contains the actual value and x4 contains the expected value.
     failedtest_trap_x7_x9:
+        j rvmodel_halt_fail
         la x9, begin_failure_scratch
         SREG x7, 104(x9)               # store return address
         SREG DEFAULT_TEMP_REG, 32(x9)  # save expected value currently in x4
@@ -65,6 +69,7 @@
 #ifdef F_SUPPORTED
     # FP failure entry points (failure_type = 1)
     failedtest_fp_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -73,6 +78,7 @@
         j failedtest_saveregs
 
     failedtest_fp_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -85,6 +91,7 @@
         j failedtest_saveregs
 
     failedtest_fp_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -98,6 +105,7 @@
 
     # fflags failure entry points (failure_type = 2)
     failedtest_fflags_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -106,6 +114,7 @@
         j failedtest_saveregs
 
     failedtest_fflags_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -118,6 +127,7 @@
         j failedtest_saveregs
 
     failedtest_fflags_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -134,6 +144,7 @@
 
     # -------- ACTIVE --------
     failedtest_vec_active_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -143,6 +154,7 @@
         j failedtest_saveregs
 
     failedtest_vec_active_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -156,6 +168,7 @@
         j failedtest_saveregs
 
     failedtest_vec_active_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -170,6 +183,7 @@
 
     # -------- TAIL --------
     failedtest_vec_tail_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -179,6 +193,7 @@
         j failedtest_saveregs
 
     failedtest_vec_tail_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -192,6 +207,7 @@
         j failedtest_saveregs
 
     failedtest_vec_tail_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -206,6 +222,7 @@
 
     # -------- MASK --------
     failedtest_vec_mask_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -215,6 +232,7 @@
         j failedtest_saveregs
 
     failedtest_vec_mask_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -228,6 +246,7 @@
         j failedtest_saveregs
 
     failedtest_vec_mask_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -242,6 +261,7 @@
 
     # -------- BASE --------
     failedtest_vec_base_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -251,6 +271,7 @@
         j failedtest_saveregs
 
     failedtest_vec_base_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -264,6 +285,7 @@
         j failedtest_saveregs
 
     failedtest_vec_base_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 112(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -278,6 +300,7 @@
 
     # vxsat failure entry points (failure_type = 5)
     failedtest_vxsat_x5_x4:
+        j rvmodel_halt_fail
         la DEFAULT_TEMP_REG, begin_failure_scratch
         SREG DEFAULT_LINK_REG, 40(DEFAULT_TEMP_REG)
         SREG x1, 8(DEFAULT_TEMP_REG)
@@ -286,6 +309,7 @@
         j failedtest_saveregs
 
     failedtest_vxsat_x8_x7:
+        j rvmodel_halt_fail
         la x7, begin_failure_scratch
         SREG x8, 64(x7)
         SREG DEFAULT_TEMP_REG, 32(x7)
@@ -298,6 +322,7 @@
         j failedtest_saveregs
 
     failedtest_vxsat_x14_x13:
+        j rvmodel_halt_fail
         la x13, begin_failure_scratch
         SREG x14, 104(x13)
         SREG DEFAULT_TEMP_REG, 32(x13)
@@ -494,6 +519,7 @@
 
   #if defined(F_SUPPORTED) || defined(ZFINX_SUPPORTED)
     failedtest_saveresults_fflags:
+        j rvmodel_halt_fail
         # Re-read fflags for bad value (hasn't changed since failure).
         csrr x6, fflags
         SREG x6, 272(DEFAULT_TEMP_REG)    # failing_value
@@ -536,6 +562,7 @@
         j failedtest_saveresults_common
 
     failedtest_saveresults_fp:
+        j rvmodel_halt_fail
         # Extract FP register number from FSREG instruction at -20 from return address
         # FSREG is S-type: imm[11:5] | rs2[24:20] | rs1[19:15] | funct3 | imm[4:0] | opcode
         lhu x6, -18(DEFAULT_LINK_REG)     # upper half of FSREG
@@ -612,6 +639,7 @@
 #ifdef RVTEST_VECTOR
 
     failedtest_saveresults_vector:
+        j rvmodel_halt_fail
         # --------------------------------------------------
         # Save failing instruction, address and vd
         # --------------------------------------------------
@@ -865,7 +893,8 @@
         j failedtest_saveresults_common
 
     failedtest_saveresults_vxsat:
-        # Re-read vxsat for bad value (hasn't changed since failure).
+        j rvmodel_halt_fail
+        // # Re-read vxsat for bad value (hasn't changed since failure).
         csrr x6, vxsat
         SREG x6, 272(DEFAULT_TEMP_REG)    # failing_value
 
@@ -909,6 +938,7 @@
 #endif // RVTEST_VECTOR
 
     failedtest_saveresults_bad_instr:
+        j rvmodel_halt_fail
         li x8, 1
         LA(x9, failure_diag_type)
         sw x8, 0(x9)
@@ -916,6 +946,7 @@
         j failedtest_saveresults_common
 
     failedtest_saveresults_bad_ptr:
+        j rvmodel_halt_fail
         li x8, 2
         LA(x9, failure_diag_type)
         sw x8, 0(x9)
@@ -947,6 +978,7 @@
     //==========================================================================
 
     failedtest_saveresults_trap:
+        j rvmodel_halt_fail
         //--------------------------------------------------------------
         // Load the failure string pointer from the embedded data
         //--------------------------------------------------------------
@@ -1208,6 +1240,7 @@
 
 
     failedtest_saveresults_common:
+        j rvmodel_halt_fail
         # After the jal instruction there are two UDB_MXLEN-sized pointers: the instruction address and the test string pointer
         # The jal returns to DEFAULT_LINK_REG, which points to the data after jal  (i.e., the first pointer itself)
 
@@ -1223,8 +1256,8 @@
     #endif
         SREG x6, 264(DEFAULT_TEMP_REG)
 
-        # Fetch the failing instruction using INSTR_PTR address
-        # Check bottom 2 bits: if inst[1:0] != 0b11, it's a 16-bit compressed instruction
+        // # Fetch the failing instruction using INSTR_PTR address
+        // # Check bottom 2 bits: if inst[1:0] != 0b11, it's a 16-bit compressed instruction
         lhu x7, 0(x6)       # get lower half of the failing instruction
         andi x8, x7, 3
         li x9, 3
@@ -1248,6 +1281,7 @@
         SREG x6, 288(DEFAULT_TEMP_REG)    # save the string pointer
 
     failedtest_report:
+        j rvmodel_halt_fail
       print_failstr:
         LA(a0, failstr)
         call rvmodel_io_write_str
@@ -1310,6 +1344,7 @@
         jal failedtest_dec_to_str
         j failedtest_report_print_regstr
     failedtest_report_not_intreg:
+        j rvmodel_halt_fail
         li a1, 1
         beq a0, a1, failedtest_report_fpreg
         li a1, 4
@@ -1321,6 +1356,7 @@
         call rvmodel_io_write_str
         j failedtest_report_after_reg
     failedtest_report_fpreg:
+        j rvmodel_halt_fail
         # FP: write "f" + decimal register number
         li a1, 'f'
         LA(a2, ascii_buffer)
@@ -1330,6 +1366,7 @@
         jal failedtest_dec_to_str
         j failedtest_report_print_regstr
     failedtest_report_vecreg:
+        j rvmodel_halt_fail
         li a1, 'v'
         LA(a2, ascii_buffer)
         sb a1, 0(a2)
@@ -1338,13 +1375,16 @@
         jal failedtest_dec_to_str
         j failedtest_report_print_regstr
     failedtest_report_vxsat:
+        j rvmodel_halt_fail
         LA(a0, vxsatstr)
         call rvmodel_io_write_str
         j failedtest_report_after_reg
     failedtest_report_print_regstr:
+        j rvmodel_halt_fail
         LA(a0, ascii_buffer)
         call rvmodel_io_write_str
     failedtest_report_after_reg:
+        j rvmodel_halt_fail
     #ifdef RVTEST_VECTOR
         // ---- Vector-specific fields (only printed for failure_type == 4) ----
         lw a0, failure_type
@@ -1462,6 +1502,7 @@
         addi x30, x30, -1              # point to end of mask (mismatch_mask + vlenb - 1)
 
     failedtest_report_mask_loop:
+        j rvmodel_halt_fail
         beqz x31, failedtest_report_mask_done
 
         LA(a2, ascii_buffer)           # reuse buffer for one rendered byte at a time
@@ -1476,6 +1517,7 @@
         addi x31, x31, -1
         j failedtest_report_mask_loop
     failedtest_report_mask_done:
+        j rvmodel_halt_fail
     # Add newline and null terminator
         LA(a2, ascii_buffer)
         LI(a3, 10)                     # '\n'
@@ -1488,6 +1530,7 @@
         j failedtest_report_end
 
     failedtest_report_vec_done:
+        j rvmodel_halt_fail
     #endif // RVTEST_VECTOR
 
         # Print failing value — type-aware
@@ -1509,11 +1552,13 @@
     #endif
         j failedtest_report_badval_done
     failedtest_report_badval_not_fp:
+        j rvmodel_halt_fail
         # Integer or fflags: standard UDB_MXLEN-bit hex
         LREG a0, failing_value
         li a1, UDB_MXLEN
         jal failedtest_hex_to_str
     failedtest_report_badval_done:
+        j rvmodel_halt_fail
         LA(a0, ascii_buffer)
         call rvmodel_io_write_str
 
@@ -1539,20 +1584,24 @@
     #endif
         j failedtest_report_expval_done
     failedtest_report_expval_not_fp:
+        j rvmodel_halt_fail
         # Integer or fflags: standard UDB_MXLEN-bit hex
         LREG a0, expected_value
         li a1, UDB_MXLEN
         jal failedtest_hex_to_str
     failedtest_report_expval_done:
+        j rvmodel_halt_fail
         LA(a0, ascii_buffer)
         call rvmodel_io_write_str
 
         j failedtest_report_end
 
     failedtest_report_diag:
+        j rvmodel_halt_fail
         li a1, 1
         bne a0, a1, failedtest_report_bad_pointer_diag
     failedtest_report_bad_instr_diag:
+        j rvmodel_halt_fail
         LA(a0, failure_diag_bad_instr_str)
         call rvmodel_io_write_str
         LREG a0, expected_value
@@ -1563,6 +1612,7 @@
         j failedtest_report_end
 
     failedtest_report_bad_pointer_diag:
+        j rvmodel_halt_fail
         LA(a0, failure_diag_bad_ptr_str)
         call rvmodel_io_write_str
         LREG a0, expected_value
@@ -1585,6 +1635,7 @@
     //==========================================================================
 
     failedtest_report_trap_detailed:
+        j rvmodel_halt_fail
         // Load subtype and dispatch. The final trap-count check has a compact
         // report below; skip the generic trap-failure header to keep it focused.
         lw x8, trap_diag_subtype
@@ -1914,23 +1965,26 @@
 
 
     failedtest_report_end:
+        j rvmodel_halt_fail
         # Print end string
         LA(a0, endstr)
         call rvmodel_io_write_str
 
     failedtest_terminate:
+        j rvmodel_halt_fail
         call rvmodel_halt_fail
 
 
-    # Print saved xepc, xcause, xtval, xstatus for trap failure diagnostics.
-    # All four were snapshotted by the trap handler before trap signature
-    # word 0, using the trapping mode's own CSRs (CSR_X* aliases): the live
-    # CSRs can't be read here because the handler rewrites xEPC
-    # (adj_*epc_rtn) before some mismatches are detected, an S/VS-mode
-    # handler can't read the M-mode CSRs at all, and any re-trap (e.g. PMP
-    # faults from rvmodel_io_write_str) would clobber them.
-    # Saves and restores ra via csr_context_ret_addr so callers can use 'call'.
+    // # Print saved xepc, xcause, xtval, xstatus for trap failure diagnostics.
+    // # All four were snapshotted by the trap handler before trap signature
+    // # word 0, using the trapping mode's own CSRs (CSR_X* aliases): the live
+    // # CSRs can't be read here because the handler rewrites xEPC
+    // # (adj_*epc_rtn) before some mismatches are detected, an S/VS-mode
+    // # handler can't read the M-mode CSRs at all, and any re-trap (e.g. PMP
+    // # faults from rvmodel_io_write_str) would clobber them.
+    // # Saves and restores ra via csr_context_ret_addr so callers can use 'call'.
     failedtest_print_csr_context:
+        j rvmodel_halt_fail
         la a2, csr_context_ret_addr
         SREG ra, 0(a2)
 
@@ -1975,6 +2029,7 @@
     # a0: value to convert
     # a1: number of bits (32 or 64)
     failedtest_hex_to_str:
+        j rvmodel_halt_fail
         LA(a2, ascii_buffer)     # buffer pointer
         LI(a3, '0')
         sb a3, 0(a2)            # write '0'
@@ -1983,6 +2038,7 @@
         addi a2, a2, 2          # move past "0x"
         mv a3, a1               # a3 = bit count
     failedtest_hex_to_str_loop:
+        j rvmodel_halt_fail
         addi a3, a3, -4         # move to next nibble
         srl a4, a0, a3          # shift nibble to bottom
         andi a4, a4, 15         # mask to get nibble
@@ -1994,9 +2050,11 @@
         addi a4, a4, 87         # 'a' - 10 = 87
         j failedtest_hex_to_str_write
     failedtest_hex_to_str_digit:
+        j rvmodel_halt_fail
         # It's a digit (0-9)
         addi a4, a4, 48         # '0' = 48
     failedtest_hex_to_str_write:
+        j rvmodel_halt_fail
         sb a4, 0(a2)            # write character to buffer
         addi a2, a2, 1          # advance buffer pointer
         bnez a3, failedtest_hex_to_str_loop
@@ -2013,6 +2071,7 @@
     # a0: register number (0-31)
     # a2: buffer pointer (writes digits + '\n' + '\0')
     failedtest_dec_to_str:
+        j rvmodel_halt_fail
         li a3, 10
         blt a0, a3, 1f         # single digit
         addi a0, a0, -10
@@ -2038,6 +2097,7 @@
     # a0: upper UDB_MXLEN-bit value
     # a1: lower UDB_MXLEN-bit value
     failedtest_combined_hex_to_str:
+        j rvmodel_halt_fail
         LA(a2, ascii_buffer)     # buffer pointer
         LI(a3, '0')
         sb a3, 0(a2)
@@ -2047,6 +2107,7 @@
         # Convert upper half nibbles
         li a3, UDB_MXLEN
     failedtest_combined_upper_loop:
+        j rvmodel_halt_fail
         addi a3, a3, -4
         srl a4, a0, a3
         andi a4, a4, 15
@@ -2055,8 +2116,10 @@
         addi a4, a4, 87         # 'a' - 10
         j failedtest_combined_upper_write
     failedtest_combined_upper_digit:
+        j rvmodel_halt_fail
         addi a4, a4, 48         # '0'
     failedtest_combined_upper_write:
+        j rvmodel_halt_fail
         sb a4, 0(a2)
         addi a2, a2, 1
         bnez a3, failedtest_combined_upper_loop
@@ -2064,6 +2127,7 @@
         mv a0, a1
         li a3, UDB_MXLEN
     failedtest_combined_lower_loop:
+        j rvmodel_halt_fail
         addi a3, a3, -4
         srl a4, a0, a3
         andi a4, a4, 15
@@ -2072,8 +2136,10 @@
         addi a4, a4, 87         # 'a' - 10
         j failedtest_combined_lower_write
     failedtest_combined_lower_digit:
+        j rvmodel_halt_fail
         addi a4, a4, 48         # '0'
     failedtest_combined_lower_write:
+        j rvmodel_halt_fail
         sb a4, 0(a2)
         addi a2, a2, 1
         bnez a3, failedtest_combined_lower_loop

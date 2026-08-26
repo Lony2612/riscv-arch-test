@@ -9,12 +9,122 @@
 
 #define STANDARD_SM_SUPPORTED
 
+
+.set MP_DONE_ADDR,  0x9f0f2000
+.set TOTAL_CORE_NUM, 1
+.set RERI_INT_SEL, 0
+
 ##### STARTUP #####
 
 # Perform boot operations. Can be empty or left undefined unless needed for
 # DUT-specific behavior such as turning on a memory controller or
 # initializing custom state.
-//#define RVMODEL_BOOT
+#define RVMODEL_BOOT 
+
+.macro WKMODEL_BOOT
+  // # For MP test, all cores do initialization
+  // # TOTAL_CORE_NUM is passed from compiler options 
+  li x3, TOTAL_CORE_NUM
+  li x4, 0x1
+  blt x4, x3, core_init_begin
+
+  // # For UP test, only core0 do initialization
+  csrr x3,mhartid
+  beqz x3, core_init_begin
+  wfi
+
+  core_init_begin:
+  // enable extension
+  li  x3, 0x400000
+  csrs 0x7c0, x3
+
+  // # enable fpu
+  li   x3, 0x6000
+  csrs mstatus,x3
+
+  // # enable vector
+  li   x3, 0x200
+  csrs mstatus,x3
+
+  // enable unalign
+  li x3, 0x8000
+  csrs 0x7c0,x3
+
+  // mxstatus
+  li  x3, 0x638000
+  csrs 0x7c0, x3
+
+  // msmpr
+  csrs 0x7f3, 0x1
+
+  // ## PART 2: initialize stack pointer & ppn
+  csrr x3,  mhartid
+  li x4,  1
+
+  ENABLE_HYPER
+
+  .global cpu_0_sp	
+  cpu_0_sp:
+  la x2, __stack_top
+  li x31,0x1000
+  .option push
+  .option arch, +m
+  mul x31,x31,x3
+  .option pop
+  add x2,x31,x2
+  csrw mscratch,x2
+  csrw sscratch,x2
+  // csrw vsscratch, x2
+
+  // # PART 3:initialize mtvec value 
+  la    x3,trap_Mhandler
+  csrw  mtvec,x3
+  la    x3,trap_Shandler
+  csrw  stvec,x3
+
+  .if HWCFIG_HYPERVISOR==1
+    ENABLE_HYPER
+    la    x3,trap_Hhandler
+    csrw  vstvec,x3
+  .endif
+
+  // # enable mie
+  li   x3, 0x8
+  csrs mstatus,x3
+
+  // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
+  li x3, 0x70013
+  csrs 0x7c2, x3 // #mcor
+
+  // #  enable ICACHE,DCACHE,BHT, BTB, IBP, RAS and WA
+  li x3, 0x11ff
+  csrs 0x7c1, x3 // #mhcr
+
+  .global after_l2en 
+  after_l2en:
+  li x3, 0x11ff
+  csrs 0x7c1, x3 // #mhcr
+
+  li  x3, 0x43e14c30c
+  csrs  0x7c5, x3 // #mhint
+
+  // 
+  li x3, 0xe0001419
+  csrs  0x7c3, x3
+
+  // la x2, signature_base
+  RVTEST_INIT_REGS // Put deterministic values in each register
+
+  SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
+  .global RAND_ME_INT_BEG
+  RAND_ME_INT_BEG:
+  mret
+  .global RAND_ME_INT_END
+  RAND_ME_INT_END:
+  nop
+  nop
+  j rvtest_code_begin
+.endm
 
 // Custom RVMODEL_BOOT_TO_MMODE overrides default RVTEST_BOOT_TO_MMODE
 // if defined.  For most DUTs, the default should work and this macro
@@ -49,14 +159,7 @@
     j self_loop_fail      ;\
 
 ##### IO #####
-
-# Example UART implementation.
-# Expects a PC16550-compatible UART.
-# Change these addresses to match your memory map
-.EQU UART_BASE_ADDR, 0x10000000
-.EQU UART_THR, (UART_BASE_ADDR + 0)
-.EQU UART_LCR, (UART_BASE_ADDR + 3)
-.EQU UART_LSR, (UART_BASE_ADDR + 5)
+.EQU TB_PRINT_ADDR, 0x9ff00000
 
 # Initialization steps needed prior to writing to the console
 # _R1, _R2, and _R3 can be used as temporary registers if needed.
@@ -68,14 +171,22 @@
   //   li _R2, 3                ; /* 8-bit characters, 1 stop bit, no parity */ \
   //   sb _R2, 0(_R1)           ; \
 
-# Prints a null-terminated string using a DUT specific mechanism.
-# A pointer to the string is passed in _STR_PTR.
-# _R1, _R2, and _R3 can be used as temporary registers if needed.
-# Do not modify any other registers (or make sure to restore them).
-#define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR)
+// # Prints a null-terminated string using a DUT specific mechanism.
+// # A pointer to the string is passed in _STR_PTR.
+// # _R1, _R2, and _R3 can be used as temporary registers if needed.
+// # Do not modify any other registers (or make sure to restore them).
+#define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR) \
+1:                                                   ;\
+  lbu _R1, 0(_STR_PTR)       ;   /* Load byte */      \
+  beqz _R1, 2f               ;   /* Exit if null */   \
+  li _R2, TB_PRINT_ADDR                              ;\
+  sb _R1, 0(_R2)                                    ;\
+  addi _STR_PTR, _STR_PTR, 1                         ;\
+  j 1b                                               ;\
+2:
 // 1:                           ;                       \
 //   lbu _R1, 0(_STR_PTR)        ;/* Load byte */        \
-//   beqz _R1, 3f                ;/* Exit if null */     \
+//   beqz _R1, 3f                ;     \
 // 2: /* uart_putc */           ;                      \
 //   li _R2, UART_LSR ;\
 //   4: /* uart_putc_wait_busy */ \
