@@ -38,7 +38,8 @@
   // Include model specific boot code
   // potentially long call to code after the data segment.
   #ifndef TARGET_IS_SAIL
-    WKMODEL_BOOT
+    LA(ra, wk_boot)
+    jalr ra
   #else
     // j rvtest_code_begin
     LA(ra, rvmodel_boot)
@@ -350,6 +351,9 @@
 
   nop // Padding to ensure valid memory at the edge of the section
 
+  #ifndef TARGET_IS_SAIL
+    WKMODEL_BOOT
+  #endif
 //   .global __mp_end
 // __mp_end:
 //   fence

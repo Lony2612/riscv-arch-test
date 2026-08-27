@@ -24,6 +24,8 @@
 .macro WKMODEL_BOOT
   // # For MP test, all cores do initialization
   // # TOTAL_CORE_NUM is passed from compiler options 
+  .global wk_boot
+  wk_boot:
   li x3, TOTAL_CORE_NUM
   li x4, 0x1
   blt x4, x3, core_init_begin
