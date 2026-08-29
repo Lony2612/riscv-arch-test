@@ -67,28 +67,28 @@
 
   .global cpu_0_sp	
   cpu_0_sp:
-  la x2, __stack_top
-  li x31,0x1000
-  .option push
-  .option arch, +m
-  mul x31,x31,x3
-  .option pop
-  add x2,x31,x2
-  csrw mscratch,x2
-  csrw sscratch,x2
-  // csrw vsscratch, x2
+  // la x2, __stack_top
+  // li x31,0x1000
+  // .option push
+  // .option arch, +m
+  // mul x31,x31,x3
+  // .option pop
+  // add x2,x31,x2
+  // csrw mscratch,x2
+  // csrw sscratch,x2
+  // // csrw vsscratch, x2
 
-  // # PART 3:initialize mtvec value 
-  la    x3,trap_Mhandler
-  csrw  mtvec,x3
-  la    x3,trap_Shandler
-  csrw  stvec,x3
+  // // # PART 3:initialize mtvec value 
+  // la    x3,trap_Mhandler
+  // csrw  mtvec,x3
+  // la    x3,trap_Shandler
+  // csrw  stvec,x3
 
-  .if HWCFIG_HYPERVISOR==1
-    ENABLE_HYPER
-    la    x3,trap_Hhandler
-    csrw  vstvec,x3
-  .endif
+  // .if HWCFIG_HYPERVISOR==1
+  //   ENABLE_HYPER
+  //   la    x3,trap_Hhandler
+  //   csrw  vstvec,x3
+  // .endif
 
   // # enable mie
   li   x3, 0x8
@@ -125,7 +125,7 @@
   RAND_ME_INT_END:
   nop
   nop
-  j rvtest_code_begin
+  // j rvtest_code_begin
 .endm
 
 // Custom RVMODEL_BOOT_TO_MMODE overrides default RVTEST_BOOT_TO_MMODE

@@ -37,14 +37,14 @@
 
   // Include model specific boot code
   // potentially long call to code after the data segment.
-  #ifndef TARGET_IS_SAIL
-    LA(ra, wk_boot)
-    jalr ra
-  #else
+  // #ifndef TARGET_IS_SAIL
+  //   LA(ra, wk_boot)
+  //   jalr ra
+  // #else
     // j rvtest_code_begin
     LA(ra, rvmodel_boot)
     jalr ra
-  #endif
+  // #endif
 
   // Create new section so that .{b/p2}align directives in the test code don't affect the
   // entry point address. The assembler increases a section's overall alignment to
@@ -217,6 +217,11 @@
     // boot to the lowest supported privilege mode unless a higher mode is specified by BOOT_TO_MMODE or BOOT_TO_SMODE
     // always boot to at least M-mode
     // TODO: RVTEST_BOOT_TO_S/UMODE are temporarily gated, so we remain in M-mode unless BOOT_TO_S/UMODE parameters are set.  Remove this once all tests are ported to T-SBI.
+    
+    #ifndef TARGET_IS_SAIL
+      WKMODEL_BOOT
+    #endif
+    
     RVTEST_BOOT_TO_MMODE
     #ifndef BOOT_TO_MMODE
       // the BOOT_TO_MMODE symbol will be defined in any tests that should run in M-mode.
@@ -351,9 +356,6 @@
 
   nop // Padding to ensure valid memory at the edge of the section
 
-  #ifndef TARGET_IS_SAIL
-    WKMODEL_BOOT
-  #endif
 //   .global __mp_end
 // __mp_end:
 //   fence
