@@ -514,7 +514,7 @@
       // `vlen_exp` and `elen_exp` should be between 3 and 16,
       // inclusive.  If `support_level` is `"Disabled"`, then these
       // should be left as 3 (or any other legal value).
-      "vlen_exp": 8,
+      "vlen_exp": 9,
       "elen_exp": 6,
       "reserved_behavior": {
         // This determines how to handle attempts by vsetvli, vsetivli,
@@ -854,10 +854,10 @@
     // Enabling Sstvala requires that the exceptions specified in the extension
     // have their appropriate settings under `base.xtval_nonzero`.
     "Sstvala": {
-      "supported": false
+      "supported": true
     },
     "Svade": {
-      "supported": false
+      "supported": true
     },
     "Svadu": {
       "supported": false

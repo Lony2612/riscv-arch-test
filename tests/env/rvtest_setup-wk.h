@@ -96,11 +96,14 @@
   // unexpected-interrupt handlers, which can run in S/U/VS/VU mode. The epilogs read
   // mscratch and other M-mode CSRs, so every entry path must switch to M-mode first.
   cleanup_epilogs:
-    #ifndef TARGET_IS_SAIL
-      j rvmodel_halt_pass
-    #endif
     #ifdef STANDARD_SM_SUPPORTED
       RVTEST_GOTO_MMODE
+    
+      #ifndef TARGET_IS_SAIL
+        j rvmodel_halt_pass
+      #else
+        nop
+      #endif
       #ifdef S_SUPPORTED
         #ifdef H_SUPPORTED
           RVTEST_TRAP_EPILOG V        // actual v-mode prolog/epilog/handler code
@@ -281,9 +284,7 @@
     LA (T1, rvtest_trap_count)
     SREG zero, 0(T1)
 
-    #ifdef TARGET_IS_SAIL
-      RVTEST_INIT_REGS // Put deterministic values in each register
-    #endif
+    RVTEST_INIT_REGS
 
     LA (T1, rvtest_code_begin)
     jr T1                         // Jump back to the start of the test

@@ -121,7 +121,7 @@ params:
   # M params
   MUTABLE_MISA_M: false
   # F params
-  MUTABLE_MISA_F: false
+  MUTABLE_MISA_F: true
   HW_MSTATUS_FS_DIRTY_UPDATE: precise
   MSTATUS_FS_LEGAL_VALUES: [0, 1, 2, 3]
   # D params
@@ -193,13 +193,8 @@ params:
   NUM_USABLE_PMP_ENTRIES: 16
   PMP_NA4_SUPPORTED: true
   PMP_NAPOT_SUPPORTED: true
-  PMP_TOR_SUPPORTED: true
   HPM_COUNTER_EN:
     [
-      false,
-      false,
-      false,
-      true,
       true,
       true,
       true,

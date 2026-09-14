@@ -14,7 +14,7 @@
 .set TOTAL_CORE_NUM, 1
 .set RERI_INT_SEL, 0
 
-##### STARTUP #####
+// ##### STARTUP // #####
 
 # Perform boot operations. Can be empty or left undefined unless needed for
 # DUT-specific behavior such as turning on a memory controller or
@@ -40,14 +40,6 @@
   li  x3, 0x400000
   csrs 0x7c0, x3
 
-  // # enable fpu
-  li   x3, 0x6000
-  csrs mstatus,x3
-
-  // # enable vector
-  li   x3, 0x200
-  csrs mstatus,x3
-
   // enable unalign
   li x3, 0x8000
   csrs 0x7c0,x3
@@ -63,7 +55,7 @@
   csrr x3,  mhartid
   li x4,  1
 
-  ENABLE_HYPER
+  // ENABLE_HYPER
 
   .global cpu_0_sp	
   cpu_0_sp:
@@ -90,10 +82,6 @@
   //   csrw  vstvec,x3
   // .endif
 
-  // # enable mie
-  li   x3, 0x8
-  csrs mstatus,x3
-
   // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
   li x3, 0x70013
   csrs 0x7c2, x3 // #mcor
@@ -104,27 +92,26 @@
 
   .global after_l2en 
   after_l2en:
-  li x3, 0x11ff
-  csrs 0x7c1, x3 // #mhcr
+  // li x3, 0x11ff
+  // csrs 0x7c1, x3 // #mhcr
 
   li  x3, 0x43e14c30c
   csrs  0x7c5, x3 // #mhint
 
-  // 
   li x3, 0xe0001419
-  csrs  0x7c3, x3
+  csrs  0x7c3, x3   // mccr2
 
   // la x2, signature_base
-  RVTEST_INIT_REGS // Put deterministic values in each register
+  // RVTEST_INIT_REGS // Put deterministic values in each register
 
-  SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
-  .global RAND_ME_INT_BEG
-  RAND_ME_INT_BEG:
-  mret
-  .global RAND_ME_INT_END
-  RAND_ME_INT_END:
-  nop
-  nop
+  // SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
+  // .global RAND_ME_INT_BEG
+  // RAND_ME_INT_BEG:
+  // mret
+  // .global RAND_ME_INT_END
+  // RAND_ME_INT_END:
+  // nop
+  // nop
   // j rvtest_code_begin
 .endm
 
@@ -136,10 +123,10 @@
 // state in a fashion similar to RVTEST_BOOT_TO_MMODE.
 //#define RVMODEL_BOOT_TO_MMODE
 
-##### TERMINATION #####
+// // ##### TERMINATION // #####
 
-# Terminate test with a pass indication.
-# When the test is run in simulation, this should end the simulation.
+// # Terminate test with a pass indication.
+// # When the test is run in simulation, this should end the simulation.
 #define RVMODEL_HALT_PASS  \
   li x1, 1                ;\
   la t0, tohost           ;\
@@ -147,6 +134,7 @@
     sw x1, 0(t0)          ;\
     sw x0, 4(t0)          ;\
   self_loop_pass:         ;\
+  __exit:                 ;\
     j self_loop_pass      ;\
 
 # Terminate test with a fail indication.
@@ -158,9 +146,10 @@
     sw x1, 0(t0)          ;\
     sw x0, 4(t0)          ;\
   self_loop_fail:         ;\
+  __fail:                 ;\
     j self_loop_fail      ;\
 
-##### IO #####
+// ##### IO // #####
 .EQU TB_PRINT_ADDR, 0x9ff00000
 
 # Initialization steps needed prior to writing to the console
@@ -178,13 +167,13 @@
 // # _R1, _R2, and _R3 can be used as temporary registers if needed.
 // # Do not modify any other registers (or make sure to restore them).
 #define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR) \
-1:                                                   ;\
-  lbu _R1, 0(_STR_PTR)       ;   /* Load byte */      \
-  beqz _R1, 2f               ;   /* Exit if null */   \
-  li _R2, TB_PRINT_ADDR                              ;\
-  sb _R1, 0(_R2)                                    ;\
-  addi _STR_PTR, _STR_PTR, 1                         ;\
-  j 1b                                               ;\
+1:                                                   ;    \
+  lbu _R1, 0(_STR_PTR)       ;   /* Load byte */          \
+  beqz _R1, 2f               ;   /* Exit if null */       \
+  li _R2, TB_PRINT_ADDR                              ;    \
+  sb _R1, 0(_R2)             ;   /* transmit character */ \
+  addi _STR_PTR, _STR_PTR, 1 ;   /* Next char */          \
+  j 1b                       ;   /* Loop */               \
 2:
 // 1:                           ;                       \
 //   lbu _R1, 0(_STR_PTR)        ;/* Load byte */        \
@@ -202,15 +191,15 @@
 //   j 1b                       ;/* Loop */             \
 // 3:
 
-##### Access Fault #####
+// ##### Access Fault // #####
 
 // #define RVMODEL_ACCESS_FAULT_ADDRESS 0x02000000
 
-##### Interrupt Latency #####
+// ##### Interrupt Latency // #####
 
 #define RVMODEL_INTERRUPT_LATENCY 10
 
-##### Machine Timer #####
+// ##### Machine Timer // #####
 
 // Wally's mtime advances one tick per core clock, and the code between arming
 // mtimecmp and reaching the lower privilege mode (three CLINT stores plus
@@ -219,23 +208,23 @@
 // M-mode with MIE=1, so the trap records MPP=M instead of MPP=U/S.
 #define RVMODEL_TIMER_INT_SOON_DELAY 1000
 
-#define RVMODEL_MTIME_ADDRESS  0x0000BFF8  /* Address of mtime CSR */
+#define RVMODEL_MTIME_ADDRESS  0x0040BFF8  /* Address of mtime CSR */
 
-#define RVMODEL_MTIMECMP_ADDRESS 0x00004000 /* Address of mtimecmp CSR */
+#define RVMODEL_MTIMECMP_ADDRESS 0x00404000 /* Address of mtimecmp CSR */
 
-##### Machine Interrupts #####
+// ##### Machine Interrupts // #####
 
-#define CLINT_BASE_ADDRESS 0x00000000
+#define CLINT_BASE_ADDRESS 0x00400000
 #define RVMODEL_MSIP_ADDRESS (CLINT_BASE_ADDRESS + 0x0)
 
 
-#define PLIC_BASE_ADDRESS    0x00000000
-#define PLIC_ENABLE_ADDRESS  0x00002000
-#define PLIC_THRESH_ADDRESS  0x00200000
-#define PLIC_CLAIM_ADDRESS   0x00200004
-#define PLIC_SENABLE_ADDRESS 0x00002080   /* For S mode */
-#define PLIC_STHRESH_ADDRESS 0x00201000
-#define PLIC_SCLAIM_ADDRESS  0x00201004
+#define PLIC_BASE_ADDRESS    0x0C000000
+#define PLIC_ENABLE_ADDRESS  (PLIC_BASE_ADDRESS + 0x00002000)
+#define PLIC_THRESH_ADDRESS  (PLIC_BASE_ADDRESS + 0x00200000)
+#define PLIC_CLAIM_ADDRESS   (PLIC_BASE_ADDRESS + 0x00200004)
+#define PLIC_SENABLE_ADDRESS (PLIC_BASE_ADDRESS + 0x00002080)   /* For S mode */
+#define PLIC_STHRESH_ADDRESS (PLIC_BASE_ADDRESS + 0x00201000)
+#define PLIC_SCLAIM_ADDRESS  (PLIC_BASE_ADDRESS + 0x00201004)
 
 #define NS16550_BASE_ADDRESS 0x10000000
 #define UART_INT_SRC         10
@@ -271,9 +260,15 @@
   li _R2, RVMODEL_MSIP_ADDRESS; \
   sw zero, 0(_R2);
 
-##### Supervisor Interrupts #####
+// ##### Supervisor Interrupts // #####
 
 #define CVW_SSIP_ADDRESS (CLINT_BASE_ADDRESS + 0xC000)
+
+.set ACLINT_BASE_ADDR, 0x9fef0000
+.set ssip0, 0xc000
+.set ssip1, 0xc004
+.set ssip2, 0xc008
+.set ssip3, 0xc00c
 
 #define RVMODEL_SET_SEXT_INT(_R1, _R2)          \
   li _R1, 7;                                     \
