@@ -24,8 +24,6 @@
 .macro WKMODEL_BOOT
   // # For MP test, all cores do initialization
   // # TOTAL_CORE_NUM is passed from compiler options 
-  .global wk_boot
-  wk_boot:
   li x3, TOTAL_CORE_NUM
   li x4, 0x1
   blt x4, x3, core_init_begin
@@ -59,28 +57,6 @@
 
   .global cpu_0_sp	
   cpu_0_sp:
-  // la x2, __stack_top
-  // li x31,0x1000
-  // .option push
-  // .option arch, +m
-  // mul x31,x31,x3
-  // .option pop
-  // add x2,x31,x2
-  // csrw mscratch,x2
-  // csrw sscratch,x2
-  // // csrw vsscratch, x2
-
-  // // # PART 3:initialize mtvec value 
-  // la    x3,trap_Mhandler
-  // csrw  mtvec,x3
-  // la    x3,trap_Shandler
-  // csrw  stvec,x3
-
-  // .if HWCFIG_HYPERVISOR==1
-  //   ENABLE_HYPER
-  //   la    x3,trap_Hhandler
-  //   csrw  vstvec,x3
-  // .endif
 
   // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
   li x3, 0x70013

@@ -220,11 +220,11 @@
     // boot to the lowest supported privilege mode unless a higher mode is specified by BOOT_TO_MMODE or BOOT_TO_SMODE
     // always boot to at least M-mode
     // TODO: RVTEST_BOOT_TO_S/UMODE are temporarily gated, so we remain in M-mode unless BOOT_TO_S/UMODE parameters are set.  Remove this once all tests are ported to T-SBI.
-    
-    #ifndef TARGET_IS_SAIL
-      WKMODEL_BOOT
-    #endif
-    
+    LA(ra, wk_boot)
+    jalr ra
+
+    .global mode_switch
+    mode_switch:
     RVTEST_BOOT_TO_MMODE
     #ifndef BOOT_TO_MMODE
       // the BOOT_TO_MMODE symbol will be defined in any tests that should run in M-mode.
@@ -383,139 +383,15 @@
 // BRANCHWFI:
 //   wfi
 //   j BRANCHWFI
-
-__synchronous_exception:
-  ////push
-  csrrw x2,mscratch,x2
-  sd   x13,-8(sp)
-  sd   x14,-16(sp)
-  sd   x15,-24(sp)
-  csrr x14,mcause
-  andi x15,x14,0x7ff    //#cause
-  srli x14,x14,0x3b   //#int
-  andi x14,x14,0x10   //#mask bit
-  add  x14,x14,x15    //#{int,cause}
-
-  slli x14,x14,0x3 //#offset
-  la   x15,vector_table
-  add  x15,x14,x15  //#target pc
-  ld   x14, 0(x15)  //#get exception addr
-  ld   x13, -8(sp)  //#recover x13
-  ld   x15, -24(sp) //#recover x15
-  addi x14,x14,-8
-  jr   x14
-
-__asychronous_int:
-  sd   x13,-8(sp)
-  sd   x14,-16(sp)
-  sd   x15,-24(sp)
-  csrr x14,mcause
-  andi x15,x14,0x7ff    //#cause
-  srli x14,x14,0x3b   //#int
-  andi x14,x14,0x10   //#mask bit
-  add  x14,x14,x15    //#{int,cause}
-
-  slli x14,x14,0x3   //#offset
-  la   x15,vector_table
-  add  x15,x14,x15   //#target pc
-  ld   x14, 0(x15)   //#get exception addr
-  ld   x13, -8(sp)   //#recover x13
-  ld   x15, -24(sp)  //#recover x15
-  addi x14,x14,-8
-  jr   x14
-
-.global vector_table
- .align  10
-  vector_table:  //totally 256 entries
-  .rept   128
-  .long   rvmodel_halt_fail
-  .long  0
-  .endr
-
-  .global __dummy
-__dummy:  
   
-  .data
+  .global wk_boot
+  wk_boot:
   nop
-  nop
-  nop
-
-__synchronous_exception_s:
-  ////push
-  csrrw x2,sscratch,x2
-  sd   x13,-8(sp)
-  sd   x14,-16(sp)
-  sd   x15,-24(sp)
-  csrr x14,scause
-  andi x15,x14,0x7ff   //cause
-  srli x14,x14,0x3b  //int
-  andi x14,x14,0x10  //mask bit
-  add  x14,x14,x15   //{int,cause}
-
-  slli x14,x14,0x3//offset
-  la   x15,vector_table_s
-  add  x15,x14,x15 //target pc
-  ld   x14, 0(x15) //get exception addr
-  ld   x13, -8(sp) //recover x13
-  ld   x15, -24(sp)//recover x15
-  addi x14,x14,-4
-  ////csrrw x2,sscratch,x2
-  jr   x14
-
-.global vector_table_s
- .align  10
-  vector_table_s:  //totally 256 entries
-  .rept   128
-  .long   rvmodel_halt_fail
-  .long   0
-  .endr
-
-__synchronous_exception_vs:
-  ////push
-  csrrw x2,sscratch,x2
-  sd   x13,-8(sp)
-  sd   x14,-16(sp)
-  sd   x15,-24(sp)
-  csrr x14,scause
-  andi x15,x14,0x7ff   //cause
-  srli x14,x14,0x3b  //int
-  andi x14,x14,0x10  //mask bit
-  add  x14,x14,x15   //{int,cause}
-
-  slli x14,x14,0x3//offset
-  la   x15,vector_table_vs
-  add  x15,x14,x15 //target pc
-  ld   x14, 0(x15) //get exception addr
-  ld   x13, -8(sp) //recover x13
-  ld   x15, -24(sp)//recover x15
-  addi x14,x14,-8
-  jr   x14
-
-.global vector_table_vs
- .align  10
-  vector_table_vs:  //totally 256 entries
-  .rept   128
-  .long   rvmodel_halt_fail
-  .long   0
-  .endr
-
-  .align 4
-  .global power_up_resume_pc_stack
-  .global power_down_cnt
-
-power_up_resume_pc_stack:
-  .rept  32
-  .long  0
-  .endr
-power_down_cnt:
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
-   .dword 0x0000000000000000
+  #ifndef TARGET_IS_SAIL
+    WKMODEL_BOOT
+  #endif
+  LA (T1, mode_switch)
+  jr T1                         // Jump back to the start of the boot
 
   .popsection
 
