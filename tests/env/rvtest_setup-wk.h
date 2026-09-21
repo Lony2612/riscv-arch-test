@@ -11,8 +11,6 @@
 /**** - initializes regs                                                                ****/
 /**** - defines rvtest_code_begin global label                                          ****/
 /*******************************************************************************************/
-.include "core_init.h"
-
 .macro RVTEST_BEGIN
   // Set text section for code begin
   .section .text.init
