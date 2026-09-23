@@ -30,7 +30,7 @@
   // *** not sure this is still needed after recent simplifications.  dh 4/24/26
   .option push
   .option rvc
-  .p2align UNROLLSZ
+  .p2alignl UNROLLSZ, 0x00000013
   .option norvc
 
   // Include model specific boot code
@@ -42,6 +42,7 @@
     // j rvtest_code_begin
     LA(ra, rvmodel_boot)
     jalr ra
+    .p2alignl UNROLLSZ, 0x00000013
   // #endif
 
   // Create new section so that .{b/p2}align directives in the test code don't affect the

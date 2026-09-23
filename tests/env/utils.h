@@ -414,10 +414,10 @@
   .ifnc(reg, X0)    ;\
     .option push    ;\
     .option rvc     ;\
-    .p2align UNROLLSZ ;\
+    .p2alignw UNROLLSZ, 0x0001;\
     .option norvc   ;\
     la reg,val      ;\
-    .p2align UNROLLSZ ;\
+    .p2alignw UNROLLSZ, 0x0001;\
     .option pop     ;\
   .endif
 
