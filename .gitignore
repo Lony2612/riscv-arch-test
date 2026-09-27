@@ -27,7 +27,9 @@ __pycache__
 # Work directories
 work/
 work1/
-act4*
+*.tar.gz
+results
+*.sh
 
 # vector tests
 tests/rv32i/V*
