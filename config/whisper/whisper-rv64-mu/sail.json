@@ -375,7 +375,11 @@
     ]
   },
   "platform": {
+<<<<<<< HEAD:config/whisper/whisper-rv64-mu/sail.json
     "vendorid": 0,
+=======
+    "vendorid": 1463,
+>>>>>>> 5223dabdc (update sail for medeleg):config/cores/wk/wk-rv64gc/sail.json
     "archid": 0,
     "impid": 0,
     "hartid": 0,
