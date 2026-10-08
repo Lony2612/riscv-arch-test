@@ -29,6 +29,8 @@ def set_mtimer_int(r_mtime: int, r_mtimecmp: int, r_temp: int, r_temp2: int) -> 
         "#if __riscv_xlen == 64",
         f"LREG x{r_temp}, 0(x{r_mtime})",
         f"SREG x{r_temp}, 0(x{r_mtimecmp})",
+        "fence rw, rw",
+        f"LREG x{r_temp}, 0(x{r_mtimecmp}) # Read back to ensure write completed",
         "#elif __riscv_xlen == 32",
         "# Write sequence to prevent spurious interrupts",
         "# Read mtime (new comparand will be in temp2:temp)",
