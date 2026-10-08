@@ -123,7 +123,7 @@
 
 // Interrupt latency configuration
 #undef RVMODEL_INTERRUPT_LATENCY
-#define RVMODEL_INTERRUPT_LATENCY 1
+#define RVMODEL_INTERRUPT_LATENCY 100
 
 #undef RVMODEL_TIMER_INT_SOON_DELAY
 #define RVMODEL_TIMER_INT_SOON_DELAY 5000 // Sail ticks once per instruction; T-SBI round trips in the *_INT_SOON macros cost up to ~1000 ticks

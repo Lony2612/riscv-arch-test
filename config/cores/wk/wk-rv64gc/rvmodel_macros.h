@@ -182,19 +182,20 @@
 // RVTEST_GOTO_LOWER_MODE) can take well over 100 cycles on a pipelined core
 // with caches.  With a delay of 100 the timer interrupt fires while still in
 // M-mode with MIE=1, so the trap records MPP=M instead of MPP=U/S.
-#define RVMODEL_TIMER_INT_SOON_DELAY 1000
+#define RVMODEL_TIMER_INT_SOON_DELAY 600
 
-#define RVMODEL_MTIME_ADDRESS  0x0040BFF8  /* Address of mtime CSR */
+#define RVMODEL_ACLINT_BASE_ADDR    0x9fef0000
 
-#define RVMODEL_MTIMECMP_ADDRESS 0x00404000 /* Address of mtimecmp CSR */
+#define RVMODEL_MTIME_ADDRESS       (RVMODEL_ACLINT_BASE_ADDR + 0x0000BFF8)  /* Address of mtime CSR */
+#define RVMODEL_MTIMECMP_ADDRESS    (RVMODEL_ACLINT_BASE_ADDR + 0x00004000) /* Address of mtimecmp CSR */
 
 // ##### Machine Interrupts // #####
 
-#define CLINT_BASE_ADDRESS 0x00400000
-#define RVMODEL_MSIP_ADDRESS (CLINT_BASE_ADDRESS + 0x0)
+#define CLINT_BASE_ADDRESS          0x9fef0000
+#define RVMODEL_MSIP_ADDRESS        (CLINT_BASE_ADDRESS + 0x0)
 
 
-#define PLIC_BASE_ADDRESS    0x0C000000
+#define PLIC_BASE_ADDRESS    0x9fee8000
 #define PLIC_ENABLE_ADDRESS  (PLIC_BASE_ADDRESS + 0x00002000)
 #define PLIC_THRESH_ADDRESS  (PLIC_BASE_ADDRESS + 0x00200000)
 #define PLIC_CLAIM_ADDRESS   (PLIC_BASE_ADDRESS + 0x00200004)
@@ -234,7 +235,9 @@
 
 #define RVMODEL_CLR_MSW_INT(_R1, _R2) \
   li _R2, RVMODEL_MSIP_ADDRESS; \
-  sw zero, 0(_R2);
+  sw zero, 0(_R2); \
+  fence rw, rw; \
+  lw _R1, 0(_R2); 
 
 // ##### Supervisor Interrupts // #####
 
