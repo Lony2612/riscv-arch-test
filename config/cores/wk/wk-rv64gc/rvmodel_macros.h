@@ -94,20 +94,6 @@
 .set MB_INTPCBASE   ,0x9ff01000
 .set MB_INTTYPEBASE ,0x9ff01008
 .set MB_RANDENBASE  ,0x9ff01010
-.set MB_RESETNBASE  ,0x9ff01018
-.set MB_MSTATUS_C0   ,0x9ff01200
-.set MB_MSTATUS_C1   ,0x9ff01208
-.set MB_MSTATUS_C2   ,0x9ff01210
-.set MB_MSTATUS_C3   ,0x9ff01218
-.set MB_MSTATUS_C4   ,0x9ff01220
-.set MB_MSTATUS_C5   ,0x9ff01228
-.set MB_MSTATUS_C6   ,0x9ff01230
-.set MB_MSTATUS_C7   ,0x9ff01238
-.set MB_CORE_PAD_HALTED,0x9ff01280
-.set MB_CORE_PAD_LPMD,0x9ff01288
-.set MB_CORE_PAD_NO_OP,0x9ff01290
-.set MB_PAD_CPU_L2_REQ,0x9ff01298
-.set MB_CPU_PAD_L2_DONE,0x9ff012a0
 .set MB_OFFSET      ,0x20
 
 .macro MB_ASYN_SET  CORENUM,PC,TYPE,EN
@@ -212,21 +198,6 @@
   addi _STR_PTR, _STR_PTR, 1 ;   /* Next char */          \
   j 1b                       ;   /* Loop */               \
 2:
-// 1:                           ;                       \
-//   lbu _R1, 0(_STR_PTR)        ;/* Load byte */        \
-//   beqz _R1, 3f                ;     \
-// 2: /* uart_putc */           ;                      \
-//   li _R2, UART_LSR ;\
-//   4: /* uart_putc_wait_busy */ \
-//     lbu _R3, 0(_R2) ;\
-//     andi _R3, _R3, 0x20 ;/* check line status register bit 5 */ \
-//     beqz _R3, 4b ;/* wait until Transmit Holding Register Empty is set */ \
-//   /* uart_putc_send */ \
-//     li _R2, UART_THR ; /* transmit character */ \
-//     sb _R1, 0(_R2) ;\
-//   addi _STR_PTR, _STR_PTR, 1 ;/* Next char */        \
-//   j 1b                       ;/* Loop */             \
-// 3:
 
 // ##### Access Fault // #####
 
@@ -269,27 +240,9 @@
 
 #define RVMODEL_SET_MEXT_INT(_R1, _R2)          \
   MB_ASYN_SET 0, 5, 0x1, 0x3
-  // li _R1, 7;                                     \
-  // li _R2, PLIC_BASE_ADDRESS;                     \
-  // sw _R1, (4*UART_INT_SRC)(_R2);                 \
-  // li _R1, (1 << UART_INT_SRC);                   \
-  // li _R2, PLIC_ENABLE_ADDRESS;                   \
-  // sw _R1, 0(_R2);                                \
-  // li _R2, PLIC_THRESH_ADDRESS;                   \
-  // sw zero, 0(_R2);                               \
-  // li _R1, 0x02;                                  \
-  // li _R2, NS16550_BASE_ADDRESS;                  \
-  // sb _R1, 1(_R2);
 
 #define RVMODEL_CLR_MEXT_INT(_R1, _R2)          \
   MB_ASYN_SET 0, 5, 0x00, 0x1
-  // li _R2, NS16550_BASE_ADDRESS;                  \
-  // sb zero, 1(_R2);                               \
-  // li _R2, PLIC_CLAIM_ADDRESS;                    \
-  // lw _R1, 0(_R2);                                 \
-  // sw _R1, 0(_R2);                               \
-  // li _R2, PLIC_ENABLE_ADDRESS;  /* Since SEXT and MEXT interrupt contexts share the same source, PLIC must be disabled for MEXT context so that it can properly trigger SEXT */\
-  // sw zero, 0(_R2);
 
 #define RVMODEL_SET_MSW_INT(_R1, _R2) \
   li _R1, 1; \
@@ -316,27 +269,9 @@
 
 #define RVMODEL_SET_SEXT_INT(_R1, _R2)          \
   MB_ASYN_SET 0, 5, 0x8, 0x3
-  // li _R1, 7;                                     \
-  // li _R2, PLIC_BASE_ADDRESS;                     \
-  // sw _R1, (4*UART_INT_SRC)(_R2);                 \
-  // li _R1, (1 << UART_INT_SRC);                   \
-  // li _R2, PLIC_SENABLE_ADDRESS;                   \
-  // sw _R1, 0(_R2);                                \
-  // li _R2, PLIC_STHRESH_ADDRESS;                   \
-  // sw zero, 0(_R2);                               \
-  // li _R1, 0x02;                                  \
-  // li _R2, NS16550_BASE_ADDRESS;                  \
-  // sb _R1, 1(_R2);
 
 #define RVMODEL_CLR_SEXT_INT(_R1, _R2)          \
   MB_ASYN_SET 0, 5, 0x00, 0x1
-  // li _R2, NS16550_BASE_ADDRESS;                  \
-  // sb zero, 1(_R2);                               \
-  // li _R2, PLIC_SCLAIM_ADDRESS;                    \
-  // lw _R1, 0(_R2);                               \
-  // sw _R1, 0(_R2); \
-  // li _R2, PLIC_SENABLE_ADDRESS;  /* Disable the S-context UART enable that SET_SEXT turned on, so a later MEXT test does not also raise SEIP via the shared source */\
-  // sw zero, 0(_R2);
 
 #define RVMODEL_SET_SSW_INT(_R1, _R2) \
   li _R1, 1; \
