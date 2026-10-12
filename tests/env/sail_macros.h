@@ -41,7 +41,7 @@
 # Perform boot operations. Can be empty or left undefined unless needed for
 # DUT-specific behavior such as turning on a memory controller or
 # initializing custom state.
-#undef RVMODEL_BOOT
+// #undef RVMODEL_BOOT
 // #define RVMODEL_BOOT
 
 ##### TERMINATION #####

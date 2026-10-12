@@ -217,7 +217,6 @@ def gen_compile_tasks(
             *signature_compile_flags,
             f"-DTEST_FLEN={test_flen}",
             f'-DTEST_FILE="{test_name.name}"',
-            f'-DTARGET_IS_SAIL',
             *test_sources,
         ]
         # print(f"{' '.join(sig_elf_cmd)}")

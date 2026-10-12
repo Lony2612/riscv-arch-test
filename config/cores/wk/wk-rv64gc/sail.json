@@ -17,6 +17,23 @@
       "len": 32,
       "value": "0xFFFF_FFFF"
     },
+    "hpmcounter_width_bits": 64,
+    "hpmcounter_increments_in_self_hpmevent_write": true,
+    "hcounteren_writable_bits": {
+      "len": 32,
+      "value": "0x0"
+    },
+    "hpmevent_width_bits": 6,
+    "mcountinhibit": {
+      // Whether the `mcountinhibit` CSR is implemented.
+      "supported": true,
+      // This bits in this value control whether the corresponding
+      // bits of the CSR are writable.  Note that bit 1 cannot be written
+      // to as it is read-only zero.
+      // https://github.com/T-head-Semi/openc910/blob/b91c90914c19f114d35c8f6b73408eb241ed847c/C910_RTL_FACTORY/gen_rtl/pmu/rtl/ct_hpcp_top.v#L2563
+      // https://github.com/T-head-Semi/openc910/blob/b91c90914c19f114d35c8f6b73408eb241ed847c/C910_RTL_FACTORY/gen_rtl/pmu/rtl/ct_hpcp_top.v#L2580-L2585
+      "writable_bits": { "len": 32, "value": "0xFFFF_FFFD" }
+    },
     // The bits in this value control whether the corresponding bits
     // of the `scounteren` CSR that control access to HPM counters,
     // and `cycle`, `time` and `instret` registers, are read-only
@@ -73,6 +90,15 @@
         "base_alignment": 2
       }
     },
+    "vstvec": {
+      "direct": {
+        "supported": false
+      },
+      "vectored": {
+        "supported": false,
+        "base_alignment": 2
+      }
+    },
     "medeleg": {
       // A bit set to 1 in this value specifies that the corresponding
       // bit of `medeleg` can be set to 1. It represents the subset of
@@ -117,7 +143,12 @@
       "fetch_access_fault": true,
       "fetch_page_fault": true,
       "software_check": true,
-      "reserved_exceptions": false
+      "reserved_exceptions": false,
+      "fetch_guest_page_fault": false,
+      "hardware_error": false,
+      "load_guest_page_fault": false,
+      "samo_guest_page_fault": false,
+      "virtual_instruction": false
     },
     "reserved_behavior": {
       // The configuration option determines how to handle the reserved behavior `amocas_odd_registers`.
@@ -178,6 +209,8 @@
     // bitvectors in the model and since it is unlikely real implementations
     // will have lower values.
     "physaddr_bits": 48,
+    "asidlen": 16,
+    "vmidlen": 14,
     "pmp": {
       "grain": 10,
       // This specifies the number of PMP entries present.
@@ -227,7 +260,9 @@
         // A misaligned LR/SC currently always faults, and this field can specify
         // whether it generates an access fault (use `"AccessFault"`)
         // or a misaligned exception (use `"AlignmentException"`).
-        "lrsc": "AlignmentException"
+        "lrsc": {
+          "Some": "AlignmentException"
+        }
       },
       // If multiple memory operations are needed, this controls whether they
       // are done in increasing or decreasing address order. This is architecturally
@@ -289,7 +324,8 @@
             "vector": {
               "None": null
             },
-            "amo": "AlignmentException"
+            "amo": "AlignmentException",
+            "lrsc": "AlignmentException"
           },
           "atomic_support": "AMOArithmetic",
           "misaligned_atomicity_granule_size_exp": 0,
@@ -327,7 +363,8 @@
             "vector": {
               "None": null
             },
-            "amo": "AlignmentException"
+            "amo": "AlignmentException",
+            "lrsc": "AlignmentException"
           },
           "atomic_support": "AMONone",
           "misaligned_atomicity_granule_size_exp": 0,
@@ -363,6 +400,16 @@
       // model invalidates the reservation if a store from the same hart lies within
       // the reservation set.
       "invalidate_on_same_hart_store": false
+    },
+    // mip.MEIP, MTIP and MSIP all exist.  The UDB config sets MEI_INTR_IMPL and
+    // MTI_INTR_IMPL false only because ACT cannot raise those interrupts on this SoC.
+    //   https://github.com/T-head-Semi/openc910/blob/b91c90914c19f114d35c8f6b73408eb241ed847c/C910_RTL_FACTORY/gen_rtl/cp0/rtl/ct_cp0_regs.v#L2119-L2122
+    "interrupts": {
+      "machine": {
+        "software": { "supported": true },
+        "external": { "supported": true },
+        "timer": { "supported": true }
+      }
     },
     "clint": {
       // Whether the platform contains a CLINT.
@@ -401,14 +448,17 @@
     // Note: it is also legal for these instructions to spuriously
     // retire successfully at any point, but there is currently no
     // configuration option for this behaviour.
-    "max_time_to_wait": 200
+    "max_time_to_wait": 200,
+    "event_selectors": []
   },
   "extensions": {
     "M": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "A": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "F": {
       "supported": true,
@@ -421,10 +471,12 @@
       //                      if that flag is already set.
       // - Fflags_Dirty_Instruction: Set FS/SD when we execute an instruction that
       //                             might set a flag, even if it actually doesn't.
-      "fflags_dirty_policy": "Fflags_Dirty_Precise"
+      "fflags_dirty_policy": "Fflags_Dirty_Precise",
+      "mutable_misa": true
     },
     "D": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "V": {
       // `support_level` must be one of the below strings:
@@ -477,19 +529,155 @@
           // `vstart` is non-zero.
           "scalar_move": true
         }
-      }
+      },
+      "mutable_misa": true
     },
     "B": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": true
     },
     "S": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": false,
+      "interrupts": {
+        "software": { "supported": true },
+        "external": { "supported": true },
+        "timer": { "supported": true }
+      }
     },
     "U": {
-      "supported": true
+      "supported": true,
+      "mutable_misa": false
     },
     "Zibi": {
       "supported": false
+    },
+    "C": {
+      "supported": true,
+      "mutable_misa": false
+    },
+    "H": {
+      "mutable_misa": false,
+      "supported": false,
+      "geilen": 63,
+      "guest_page_fault_writes_htval": true,
+      // Whether a trap into M or HS mode caused by the specified exception
+      // writes the transformed trapping instruction to `mtinst`/`htinst`.
+      // This applies to integer and floating-point loads and stores
+      // (including compressed forms), LR/SC, AMOs, HLV/HLVX/HSV and CBOs.
+      // If false, zero is written instead.
+      "transformed_instruction": {
+        "load_access_fault": true,
+        "load_address_misaligned": true,
+        "load_guest_page_fault": true,
+        "load_page_fault": true,
+        "samo_access_fault": true,
+        "samo_address_misaligned": true,
+        "samo_guest_page_fault": true,
+        "samo_page_fault": true
+      },
+      "hgatp_modes": {
+        "Sv32x4": false,
+        "Sv39x4": true,
+        "Sv48x4": true,
+        "Sv57x4": true
+      },
+      "vsatp_modes": { "Sv32": false, "Sv39": true, "Sv48": true, "Sv57": true }
+    },
+    "Sdtrig": {
+      "supported": false,
+      // `breakpoint_reentrancy` must be one of the below strings:
+      // . `Use_tcontrol`: use the `mte` and `mpte` bits in the `tcontrol` CSR (this also makes the `tcontrol` CSR available)
+      // . `Use_interrupt_enables`: use `mstatus.MIE` and the `SIE` bits in `sstatus` and `vsstatus`
+      // . `No_reentrancy_support`: no specific support for reentrancy
+      // Note: `Use_tcontrol` hardwires medeleg[3] to 0, which breaks the
+      // `sbreak` test in `riscv-tests`.
+      "breakpoint_reentrancy": "No_reentrancy_support",
+      "etrigger": {
+        "supported": false,
+        // A bit set to 1 in this value specifies that the
+        // corresponding exception is supported by the trigger.
+        // Triggers for reserved exceptions are not supported.  This
+        // value is ignored when `etrigger` is not supported.
+        "supported_exceptions": { "len": "xlen", "value": "0" }
+      },
+      "hcontext": { "supported": false },
+      // Triggers
+      "icount": {
+        "supported": false,
+        "count_hardwired_one": false,
+        // Whether a `tdata1` write to an `icount` trigger with
+        // `count`=1 also makes it pending when that write's instruction
+        // matches the trigger.
+        "self_write_sets_pending": false
+      },
+      "itrigger": {
+        "supported": false,
+        // A bit set to 1 in this value specifies that the
+        // corresponding interrupt is supported by the trigger.
+        // Triggers for reserved interrupts are not supported.  This
+        // value is ignored when `itrigger` is not supported.
+        "supported_interrupts": { "len": "xlen", "value": "0" }
+      },
+      // CSRs
+      "mcontext": { "supported": false },
+      // The number of supported triggers.  This has to be
+      // non-negative, and greater than 0 if Sdtrig is supported.
+      // The model does not support more than 16 triggers.
+      "num_triggers": 0,
+      "scontext": { "supported": false }
+    },
+    "Sha": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Shcounterenw": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Shgatpa": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Shtvala": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Shvsatpa": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Shvstvala": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Shvstvecd": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Smdbltrp": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Ssdbltrp": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Ssstrict": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Sstvecd": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Svukte": {
+      "supported": false,
+      "mutable_misa": false
+    },
+    "Zilx": {
+      "supported": false,
+      "mutable_misa": false
     },
     // This extension just asserts that the cache block size is 64 bytes.
     // If you enable this you also need to ensure `platform.cache_block_size_exp`

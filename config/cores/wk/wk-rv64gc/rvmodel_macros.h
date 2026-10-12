@@ -19,77 +19,75 @@
 # Perform boot operations. Can be empty or left undefined unless needed for
 # DUT-specific behavior such as turning on a memory controller or
 # initializing custom state.
-#define RVMODEL_BOOT 
 
-.macro WKMODEL_BOOT
-  // # For MP test, all cores do initialization
-  // # TOTAL_CORE_NUM is passed from compiler options 
-  li x3, TOTAL_CORE_NUM
-  li x4, 0x1
-  blt x4, x3, core_init_begin
+#define RVMODEL_BOOT \
+  LA(ra, wk_boot); \
+  jalr ra; \
+  .global mode_switch; \
+  mode_switch:
 
-  // # For UP test, only core0 do initialization
-  csrr x3,mhartid
-  beqz x3, core_init_begin
-  wfi
+#ifdef _SAIL_MACROS_H
+  #define WKMODEL_BOOT
+#else
+  #define WKMODEL_BOOT \
+    /* For MP test, all cores do initialization */ \
+    /* TOTAL_CORE_NUM is passed from compiler options  */ \
+    li x3, TOTAL_CORE_NUM; \
+    li x4, 0x1; \
+    blt x4, x3, core_init_begin; \
+    \
+    /* For UP test, only core0 do initialization */ \
+    csrr x3,mhartid; \
+    beqz x3, core_init_begin; \
+    wfi; \
+    \
+    core_init_begin: \
+    /* enable extension */ \
+    li  x3, 0x400000; \
+    csrs 0x7c0, x3; \
+    \
+    /* enable unalign */ \
+    li x3, 0x8000; \
+    csrs 0x7c0,x3; \
+    \
+    /* mxstatus */ \
+    li  x3, 0x638000; \
+    csrs 0x7c0, x3; \
+    \
+    /* msmpr */ \
+    csrs 0x7f3, 0x1; \
+    \
+    /* PART 2: initialize stack pointer & ppn */ \
+    csrr x3,  mhartid; \
+    li x4,  1; \
+    \
+    .global cpu_0_sp; \
+    cpu_0_sp: \
+    \
+    /* invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE */ \
+    li x3, 0x70013; \
+    csrs 0x7c2, x3; /* mcor */ \
+    \
+    /* #  enable ICACHE,DCACHE,BHT, BTB, IBP, RAS and WA */ \
+    li x3, 0x11ff; \
+    csrs 0x7c1, x3; /*  mhcr */ \
+    \
+    .global after_l2en; \
+    after_l2en: \
+    li  x3, 0x43e14c30c; \
+    csrs  0x7c5, x3; /* #mhint */ \
+    \
+    li x3, 0xe0001419; \
+    csrs  0x7c3, x3;   // mccr2
+#endif
 
-  core_init_begin:
-  // enable extension
-  li  x3, 0x400000
-  csrs 0x7c0, x3
-
-  // enable unalign
-  li x3, 0x8000
-  csrs 0x7c0,x3
-
-  // mxstatus
-  li  x3, 0x638000
-  csrs 0x7c0, x3
-
-  // msmpr
-  csrs 0x7f3, 0x1
-
-  // ## PART 2: initialize stack pointer & ppn
-  csrr x3,  mhartid
-  li x4,  1
-
-  // ENABLE_HYPER
-
-  .global cpu_0_sp	
-  cpu_0_sp:
-
-  // invalid all memory for IBP, BTB, BHT, DCACHE and ICACHE
-  li x3, 0x70013
-  csrs 0x7c2, x3 // #mcor
-
-  // #  enable ICACHE,DCACHE,BHT, BTB, IBP, RAS and WA
-  li x3, 0x11ff
-  csrs 0x7c1, x3 // #mhcr
-
-  .global after_l2en 
-  after_l2en:
-  // li x3, 0x11ff
-  // csrs 0x7c1, x3 // #mhcr
-
-  li  x3, 0x43e14c30c
-  csrs  0x7c5, x3 // #mhint
-
-  li x3, 0xe0001419
-  csrs  0x7c3, x3   // mccr2
-
-  // la x2, signature_base
-  // RVTEST_INIT_REGS // Put deterministic values in each register
-
-  // SETINT 11     RAND_ME_INT_BEG RAND_ME_INT_END
-  // .global RAND_ME_INT_BEG
-  // RAND_ME_INT_BEG:
-  // mret
-  // .global RAND_ME_INT_END
-  // RAND_ME_INT_END:
-  // nop
-  // nop
-  // j rvtest_code_begin
-.endm
+#define RVMODEL_INIT \
+  .global wk_boot; \
+  wk_boot: \
+  nop; \
+  WKMODEL_BOOT \
+  LA (T1, mode_switch); \
+  jr T1                         // Jump back to the start of the boot
 
 .set MB_INTPCBASE   ,0x9ff01000
 .set MB_INTTYPEBASE ,0x9ff01008
@@ -179,7 +177,7 @@
 # _R1, _R2, and _R3 can be used as temporary registers if needed.
 # Do not modify any other registers (or make sure to restore them).
 # Can be empty or left undefined if no initialization is needed.
-#define RVMODEL_IO_INIT(_R1, _R2, _R3)
+// #define RVMODEL_IO_INIT(_R1, _R2, _R3)
   // uart_init:                ;\
   //   li _R1, UART_LCR         ; /* Load address of UART LCR */    \
   //   li _R2, 3                ; /* 8-bit characters, 1 stop bit, no parity */ \
