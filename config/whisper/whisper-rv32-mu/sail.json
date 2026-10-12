@@ -256,7 +256,7 @@
         // Similarly, a misaligned AMO and LR/SC can be configured with the same
         // option values.
         "amo": {
-          "None": null
+          "Some": "AlignmentException"
         },
         "lrsc": {
           "None": null

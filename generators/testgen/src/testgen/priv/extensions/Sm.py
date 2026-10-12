@@ -1479,7 +1479,7 @@ def _generate_mcsr_cntr_tests(test_data: TestData) -> list[str]:
         [
             "#ifdef RVMODEL_MTIME_ADDRESS",
             f"LI(x{r1}, 42)        # value to write to mtime",
-            f"LA(x{r2}, RVMODEL_MTIME_ADDRESS)        # load address of mtime",
+            f"LI(x{r2}, RVMODEL_MTIME_ADDRESS)        # load address of mtime",
             f"SREG x{r1}, 0(x{r2})        # write mtime = 42 using memory-mapped I/O",
             "fence o, i        # order the mtime write before the time read",
             test_data.add_testcase("", coverpoint, covergroup),
@@ -1490,7 +1490,7 @@ def _generate_mcsr_cntr_tests(test_data: TestData) -> list[str]:
             "",
             "#if __riscv_xlen == 32",
             f"LI(x{r1}, 67)        # value to write to mtimeh",
-            f"LA(x{r2}, RVMODEL_MTIME_ADDRESS)        # load address of mtimeh",
+            f"LI(x{r2}, RVMODEL_MTIME_ADDRESS)        # load address of mtimeh",
             f"SREG x{r1}, 4(x{r2})        # write mtimeh = 67 using memory-mapped I/O",
             "fence o, i        # order the mtimeh write before the timeh read",
             test_data.add_testcase("h", coverpoint, covergroup),
