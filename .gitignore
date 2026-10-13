@@ -37,8 +37,6 @@ tests/rv32i/Zv*
 tests/rv64i/V*
 tests/rv64i/Zv*
 
-tests/rv32*
-tests/rv64*
 
 # priv tests
 tests/priv/headers

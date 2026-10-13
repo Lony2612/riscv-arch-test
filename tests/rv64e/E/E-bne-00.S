@@ -7532,21 +7532,21 @@ E_bne_cg_cp_imm_edges_branch_all:
   addi x6, x6, 16 # should happen
 
 # branch forward by 2048
-  .p2align 11 # align to 2048 bytes
+  .p2alignw 11, 0x0001 # align to 2048 bytes
   bne x10, x12, 4f
   addi x6, x6, -32 # shouldn't happen
   j 19f # shouldn't happen
-  .p2align 11 # align to 2048 bytes
+  .p2alignw 11, 0x0001 # align to 2048 bytes
 4:
   addi x6, x6, 64 # should happen
 
 # branch forward by 4092
-  .p2align 12 # align to 4096 bytes
+  .p2alignw 12, 0x0001 # align to 4096 bytes
   nop # use up 4 bytes
   bne x10, x12, 5f
   addi x6, x6, -128 # shouldn't happen
   j 19f # shouldn't happen
-  .p2align 12 # align to 4096 bytes
+  .p2alignw 12, 0x0001 # align to 4096 bytes
 5:
   addi x6, x6, 256 # should happen
 
@@ -7570,11 +7570,11 @@ E_bne_cg_cp_imm_edges_branch_all:
   j 19f # shouldn't happen
 
 # backward branch by 4096
-  .p2align 12 # align to 4096 bytes
+  .p2alignw 12, 0x0001 # align to 4096 bytes
 10:
   addi x6, x6, 1 # should happen
   j 20f # backward branch succeeded
-  .p2align 12 # align to 4096 bytes
+  .p2alignw 12, 0x0001 # align to 4096 bytes
 11:
   .insn 0x80c51063 # bne x10, x12, -4096; GCC is turning this into a small branch and a jump
   addi x6, x6, 300 # shouldn't happen
