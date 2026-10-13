@@ -26,7 +26,7 @@
   .global mode_switch; \
   mode_switch:
 
-#ifdef _SAIL_MACROS_H
+#ifndef RVTEST_SELFCHECK
   #define WKMODEL_BOOT
 #else
   #define WKMODEL_BOOT \
@@ -81,13 +81,18 @@
     csrs  0x7c3, x3;   // mccr2
 #endif
 
-#define RVMODEL_INIT \
-  .global wk_boot; \
-  wk_boot: \
-  nop; \
-  WKMODEL_BOOT \
-  LA (T1, mode_switch); \
-  jr T1                         // Jump back to the start of the boot
+#ifndef RVTEST_SELFCHECK
+  #define RVTEST_POST_MMODE_HOOK   nop
+#else
+  #define RVTEST_POST_MMODE_HOOK   j rvmodel_halt_pass
+#endif
+
+.section .text.wk_boot, "ax", @progbits
+.global wk_boot
+wk_boot:
+    WKMODEL_BOOT
+    LA(t0, mode_switch)
+    jr t0
 
 .set MB_INTPCBASE   ,0x9ff01000
 .set MB_INTTYPEBASE ,0x9ff01008

@@ -45,6 +45,7 @@ SECTIONS
   .text.rvmodel . : {
     *(.text.rvmodel) *(.text.rvmodel.*)
     *(.text) *(.text.*)        /* 其余通用代码 */
+    *(.text.wk_boot) *(.text.wk_boot.*)
   } > iram
 
   /* 检查 IRAM 是否溢出 */

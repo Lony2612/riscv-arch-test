@@ -165,7 +165,6 @@ def gen_compile_tasks(
     sig_trace_file = build_dir / test_name.with_suffix(".sig.trace")
     sig_log_file = build_dir / test_name.with_suffix(".sig.log")
     final_elf = elf_dir / test_name.with_suffix(".elf")
-    final_cfg = elf_dir / test_name.with_suffix(".cfg")
 
     compile_prefix = [
         *toolchain.compile_prefix(xlen),
@@ -183,7 +182,6 @@ def gen_compile_tasks(
     march_flags = toolchain.march_flags(
         xlen,
         test_metadata.march,
-        # "rv64imafdcv_zicntr_zicsr_zifencei_zihpm_zfh_zba_zbb_zbc_zbs",
         assembly=not test_metadata.is_c_test,
         e_ext=test_metadata.e_ext,
     )
@@ -219,7 +217,7 @@ def gen_compile_tasks(
             f'-DTEST_FILE="{test_name.name}"',
             *test_sources,
         ]
-        # print(f"{' '.join(sig_elf_cmd)}")
+        
         tasks.append(
             BuildTask(
                 outputs=(sig_elf,),
@@ -303,12 +301,6 @@ def gen_compile_tasks(
         f'-DTEST_FILE="{test_name.name}"',
         *test_sources,
     ]
-    import os
-    os.makedirs(os.path.dirname(os.path.abspath(final_cfg)), exist_ok=True)
-    with open(str(final_cfg), "w") as cfg_file:
-        cfg_file.write(f"XLEN={xlen}\n")
-        cfg_file.write(f"TEST_FLEN={test_flen}\n")
-        cfg_file.write(f"march={test_metadata.march}\n")
     tasks.append(
         BuildTask(
             outputs=(final_elf,),
