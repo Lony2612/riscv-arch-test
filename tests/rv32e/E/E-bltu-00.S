@@ -3799,21 +3799,21 @@ E_bltu_cg_cp_imm_edges_branch_all:
   addi x7, x7, 16 # should happen
 
 # branch forward by 2048
-  .p2alignw 11, 0x0001 # align to 2048 bytes
+  .p2align 11 # align to 2048 bytes
   bltu x8, x15, 4f
   addi x7, x7, -32 # shouldn't happen
   j 19f # shouldn't happen
-  .p2alignw 11, 0x0001 # align to 2048 bytes
+  .p2align 11 # align to 2048 bytes
 4:
   addi x7, x7, 64 # should happen
 
 # branch forward by 4092
-  .p2alignw 12, 0x0001 # align to 4096 bytes
+  .p2align 12 # align to 4096 bytes
   nop # use up 4 bytes
   bltu x8, x15, 5f
   addi x7, x7, -128 # shouldn't happen
   j 19f # shouldn't happen
-  .p2alignw 12, 0x0001 # align to 4096 bytes
+  .p2align 12 # align to 4096 bytes
 5:
   addi x7, x7, 256 # should happen
 
@@ -3837,11 +3837,11 @@ E_bltu_cg_cp_imm_edges_branch_all:
   j 19f # shouldn't happen
 
 # backward branch by 4096
-  .p2alignw 12, 0x0001 # align to 4096 bytes
+  .p2align 12 # align to 4096 bytes
 10:
   addi x7, x7, 1 # should happen
   j 20f # backward branch succeeded
-  .p2alignw 12, 0x0001 # align to 4096 bytes
+  .p2align 12 # align to 4096 bytes
 11:
   .insn 0x80f46063 # bltu x8, x15, -4096; GCC is turning this into a small branch and a jump
   addi x7, x7, 300 # shouldn't happen
