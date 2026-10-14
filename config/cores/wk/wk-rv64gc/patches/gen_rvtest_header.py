@@ -47,6 +47,15 @@ def inject_rvtest_setup(src_path: Path, dst_path: Path) -> int:
         rf"\bLA\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*{TARGET_ADDRS}\s*\)"
     )
 
+    HOOK_RE = re.compile(
+        r"("
+        r"cleanup_epilogs:[^\n]*\n"
+        r"[ \t]*#ifdef STANDARD_SM_SUPPORTED[^\n]*\n"
+        r"([ \t]*)RVTEST_TSBI_GOTO_MMODE[^\n]*\n"
+        r")",
+        re.MULTILINE,
+    )
+
     if not src_path.exists():
         print(f"ERROR: source not found: {src_path}", file=sys.stderr)
         return 1
@@ -61,6 +70,18 @@ def inject_rvtest_setup(src_path: Path, dst_path: Path) -> int:
 
     new_text, n = LA_RE.subn(repl, src_text)
 
+    # ---------- 2) 在 RVTEST_TSBI_GOTO_MMODE 后插入 RVTEST_POST_MMODE_HOOK ----------
+    def repl_hook(m: "re.Match[str]") -> str:
+        block = m.group(1)
+        indent = m.group(2)
+        return f"{block}{indent}RVTEST_POST_MMODE_HOOK\n"
+
+    # 幂等：整个文件里已经存在 hook 就跳过
+    if "RVTEST_POST_MMODE_HOOK" not in new_text:
+        new_text, n_hook = HOOK_RE.subn(repl_hook, new_text, count=1)
+    else:
+        n_hook = 0
+
     dst_path.write_text(new_text)
     return 0
 
@@ -74,7 +95,7 @@ def inject_riscv_arch_test(src_path: Path, dst_path: Path) -> int:
 
 def main() -> int:
     # ---------- 路径配置 ----------
-    ACT4_ROOT = Path("/home/lony/proj/riscv-arch-test-act4")
+    ACT4_ROOT = Path.cwd()
     SRC = ACT4_ROOT / "tests/env/rvtest_failure_code.h"
     DST = Path(__file__).resolve().parent / "rvtest_failure_code.h"
     inject_rvtest_failure_code(SRC, DST)
