@@ -16,10 +16,15 @@ from pathlib import Path
 from act.build_types import BuildTask, PythonAction
 
 import gen_rvtest_header
-gen_rvtest_header.main()
+from gen_rvtest_header import LA_TO_LI_RE, MMIO_ADDR_MACROS  # noqa: F401  (共享常量)
+
+# 生成派生头文件；失败时立即中止，避免后续静默使用残缺头
+if gen_rvtest_header.main() != 0:
+    raise RuntimeError("gen_rvtest_header failed")
 
 
-OVERRIDES_DIR = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+OVERRIDES_DIR = HERE
 INST_LIMIT = 2000000
 
 
@@ -41,8 +46,11 @@ def patch(target: str):
 
 
 def _once(fn):
-    """包装补丁函数：**每个补丁函数**对**每个模块**只执行一次（幂等）。"""
-    flag = f"_user_patched_{fn.__name__}"     # ← 用函数名区分
+    """包装补丁函数：**每个补丁函数**对**每个模块**只执行一次（幂等）。
+
+    flag 使用 module + qualname，避免不同模块 / 不同作用域下同名函数冲突。
+    """
+    flag = f"_user_patched_{fn.__module__}_{fn.__qualname__}".replace(".", "_")
 
     def wrapped(mod):
         if getattr(mod, flag, False):
@@ -51,6 +59,7 @@ def _once(fn):
         setattr(mod, flag, True)
 
     return wrapped
+
 
 def _finalize_one_config(config_dir: Path,
                          env_dir: Path,
@@ -61,7 +70,6 @@ def _finalize_one_config(config_dir: Path,
     lib_dir  = base_dir / "lib"
     cases    = base_dir / "cases"
 
-    # 没 cases 也没 lib，直接跳过
     if not cases.is_dir() and not lib_dir.is_dir():
         return
 
@@ -104,6 +112,7 @@ def _copy_case_files(cfg_src: Path, s_src: Path, results_src: Path,
         if src.exists():
             shutil.copy2(src, dst)
 
+
 def _bind_args(original, args, kwargs) -> dict:
     """把 (args, kwargs) 绑定到 original 的签名上，返回 {参数名: 值}。
 
@@ -113,6 +122,7 @@ def _bind_args(original, args, kwargs) -> dict:
     bound = sig.bind_partial(*args, **kwargs)
     bound.apply_defaults()
     return dict(bound.arguments)
+
 
 def _build_cases_pack_task(test_name: Path, test_metadata, base_dir: Path):
     """把 cfg/.S/.results 统一命名后复制到 base_dir/cases/<group>/。
@@ -137,7 +147,7 @@ def _build_cases_pack_task(test_name: Path, test_metadata, base_dir: Path):
     cfg_dst     = cases_dir / f"{stem}.cfg"
     s_dst       = cases_dir / f"{stem}.S"
     results_dst = cases_dir / f"{stem}.results"
-    
+
     return BuildTask(
         outputs=(cfg_dst, s_dst, results_dst),
         deps=(results_src,),
@@ -161,6 +171,8 @@ def _toolchain_inject_include(mod):
 
     def compile_prefix(self, xlen):
         base = list(original(self, xlen))
+        if not base:
+            return [f"-I{OVERRIDES_DIR}", "-mno-relax"]
         return [base[0], f"-I{OVERRIDES_DIR}", *base[1:], "-mno-relax"]
 
     Toolchain.compile_prefix = compile_prefix
@@ -184,13 +196,21 @@ def _build_plan_write_cfg(mod):
         base_dir      = params["base_dir"]
         xlen          = params["xlen"]
 
+        flen  = getattr(test_metadata, "flen",  None)
+        march = getattr(test_metadata, "march", None)
+        if flen is None or march is None:
+            sys.stderr.write(
+                f"[patches] warning: test_metadata missing flen/march "
+                f"(flen={flen!r}, march={march!r}) for {test_name}\n"
+            )
+
         # (a)
         cfg_path = base_dir / "elfs" / test_name.with_suffix(".cfg")
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text(
             f"XLEN={xlen}\n"
-            f"TEST_FLEN={test_metadata.flen}\n"
-            f"march={test_metadata.march}\n"
+            f"TEST_FLEN={flen if flen is not None else 0}\n"
+            f"march={march if march is not None else ''}\n"
         )
 
         # (b)
@@ -220,23 +240,12 @@ def _ref_model_inst_limit(mod):
             return (*cmd[:1], *opt, *cmd[1:])
         # 兜底：字符串形式，在首个空格后插入
         s = str(cmd)
-        idx = s.find(" ")
-        return f"{s} {' '.join(opt)}" if idx == -1 else f"{s[:idx]} {' '.join(opt)}{s[idx:]}"
+        if " " not in s:
+            return f"{s} {' '.join(opt)}"
+        head, tail = s.split(" ", 1)
+        return f"{head} {' '.join(opt)} {tail}"
 
     mod._ref_model_sig_cmd = _ref_model_sig_cmd_with_inst_limit
-
-
-# 需要 LA -> LI 的 MMIO 地址宏（与 gen_rvtest_header.py 保持一致）
-_LA_TO_LI_TARGETS = (
-    "RVMODEL_MTIME_ADDRESS",
-    "RVMODEL_MTIMECMP_ADDRESS",
-    "RVMODEL_MSIP_ADDRESS",
-)
-_LA_TO_LI_RE = __import__("re").compile(
-    r"\bLA\(\s*([A-Za-z_]\w*)\s*,\s*("
-    + "|".join(_LA_TO_LI_TARGETS)
-    + r")\s*\)"
-)
 
 
 @patch("testgen.priv.extensions.Sm")
@@ -253,7 +262,7 @@ def _sm_la_to_li(mod):
 
     def _generate_mcsr_cntr_tests_with_li(test_data):
         lines = original(test_data)
-        return [_LA_TO_LI_RE.sub(r"LI(\1, \2)", line) for line in lines]
+        return [LA_TO_LI_RE.sub(r"LI(\1, \2)", line) for line in lines]
 
     mod._generate_mcsr_cntr_tests = _generate_mcsr_cntr_tests_with_li
 
@@ -261,37 +270,45 @@ def _sm_la_to_li(mod):
 @atexit.register
 def _auto_pack_on_exit() -> None:
     """Python 进程退出前，把所有 work/<config>/ 打包。"""
-    patches_dir = Path(__file__).resolve().parent            # .../config/cores/wk/wk-rv64gc/patches
-    config_include_dir = patches_dir.parent                  # .../config/cores/wk/wk-rv64gc
-    act4_root_env = Path.cwd()
-    act4_root = Path(act4_root_env).resolve()
+    try:
+        patches_dir        = OVERRIDES_DIR
+        config_include_dir = patches_dir.parent
 
-    env_dir = act4_root / "tests" / "env"
-    work_root = Path.cwd() / "work"
+        env_dir   = Path.cwd().resolve() / "tests" / "env"
+        work_root = Path.cwd() / "work"
 
-    if not work_root.is_dir():
-        return
+        if not work_root.is_dir():
+            return
 
-    for config_dir in sorted(work_root.iterdir()):
-        if not config_dir.is_dir():
-            continue
-        try:
-            _finalize_one_config(config_dir, env_dir, patches_dir, config_include_dir)
-        except Exception as e:
-            print(f"[auto-pack] ERROR for {config_dir}: {e}", file=sys.stderr)
-            import traceback
-            traceback.print_exc()
+        for config_dir in sorted(work_root.iterdir()):
+            if not config_dir.is_dir():
+                continue
+            try:
+                _finalize_one_config(
+                    config_dir, env_dir, patches_dir, config_include_dir
+                )
+            except Exception as e:
+                print(f"[auto-pack] ERROR for {config_dir}: {e}", file=sys.stderr)
+                import traceback
+                traceback.print_exc()
+    except Exception as e:
+        print(f"[auto-pack] outer ERROR: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+
 
 # ---------------------------------------------------------------------------
 # 5) MetaPathFinder：模块首次 import 后自动应用注册的补丁
 # ---------------------------------------------------------------------------
 class _Patcher(importlib.abc.MetaPathFinder):
-    _busy = False
+    # 正在包装 loader 的模块名；防止 find_spec 内部重入
+    _installing: set[str] = set()
 
     def find_spec(self, fullname, path, target=None):
-        if fullname not in _REGISTRY or self._busy:
+        if fullname not in _REGISTRY or fullname in self._installing:
             return None
-        self._busy = True
+
+        self._installing.add(fullname)
         try:
             for finder in sys.meta_path:
                 if finder is self:
@@ -305,7 +322,8 @@ class _Patcher(importlib.abc.MetaPathFinder):
 
                 class _WrappedLoader(importlib.abc.Loader):
                     def create_module(self, spec):
-                        return orig_loader.create_module(spec)
+                        fn = getattr(orig_loader, "create_module", None)
+                        return fn(spec) if fn is not None else None
 
                     def exec_module(self, module):
                         orig_loader.exec_module(module)
@@ -315,7 +333,7 @@ class _Patcher(importlib.abc.MetaPathFinder):
                 spec.loader = _WrappedLoader()
                 return spec
         finally:
-            self._busy = False
+            self._installing.discard(fullname)
         return None
 
 
