@@ -100,9 +100,6 @@
   cleanup_epilogs:
     #ifdef STANDARD_SM_SUPPORTED
       RVTEST_TSBI_GOTO_MMODE
-
-      RVTEST_POST_MMODE_HOOK
-      
       #ifdef S_SUPPORTED
         // Exact reverse of the prolog order (M, S, V).
         #ifdef H_SUPPORTED
@@ -404,22 +401,22 @@
       #if defined(RVMODEL_MTIME_ADDRESS) && defined(RVMODEL_MTIMECMP_ADDRESS) && defined(RVMODEL_TIMER_INT_SOON_DELAY)
         LI(a2, RVMODEL_TIMER_INT_SOON_DELAY)
         #if UDB_MXLEN == 32
-          LA(a1, RVMODEL_MTIMECMP_ADDRESS)
+          LI(a1, RVMODEL_MTIMECMP_ADDRESS)
           li a0, -1
           sw a0, 4(a1) // mtimecmp high word = all 1s so the split update cannot fire early
-          LA(a1, RVMODEL_MTIME_ADDRESS)
+          LI(a1, RVMODEL_MTIME_ADDRESS)
           lw a0, 0(a1) // read mtime low word
           add a0, a0, a2 // add delay to mtime low word
-          LA(a1, RVMODEL_MTIMECMP_ADDRESS)
+          LI(a1, RVMODEL_MTIMECMP_ADDRESS)
           sw a0, 0(a1) // write to mtimecmp low word
           mv a2, a0 // Save mtimecmp low word
-          LA(a1, RVMODEL_MTIME_ADDRESS)
+          LI(a1, RVMODEL_MTIME_ADDRESS)
           lw a0, 4(a1) // read mtime high word
           LI(a1, RVMODEL_TIMER_INT_SOON_DELAY)
           bgeu a2, a1, 1f // skip if didn't wrap
           addi a0, a0, 1 // increment mtime high word
           1:
-          LA(a1, RVMODEL_MTIMECMP_ADDRESS)
+          LI(a1, RVMODEL_MTIMECMP_ADDRESS)
           sw a0, 4(a1) // write to mtimecmp high word
         #else
           LI(a1, RVMODEL_MTIME_ADDRESS)
@@ -483,7 +480,7 @@
     #ifdef SSTC_SUPPORTED
       rvtest_set_sstc_int_soon_m:
         #if defined(RVMODEL_MTIME_ADDRESS) && defined(RVMODEL_TIMER_INT_SOON_DELAY)
-          LA(a1, RVMODEL_MTIME_ADDRESS)
+          LI(a1, RVMODEL_MTIME_ADDRESS)
           LI(a2, RVMODEL_TIMER_INT_SOON_DELAY)
           #if UDB_MXLEN == 32
             li a0, -1
@@ -492,7 +489,7 @@
             add a1, a0, a2 // add delay to mtime low word
             csrw stimecmp, a1 // write low word of timer compare
             mv a2, a1 // save stimecmp low word
-            LA(a1, RVMODEL_MTIME_ADDRESS)
+            LI(a1, RVMODEL_MTIME_ADDRESS)
             lw a0, 4(a1) // read mtime high word
             LI(a1, RVMODEL_TIMER_INT_SOON_DELAY)
             bgeu a2, a1, 1f // skip if didn't wrap
@@ -601,22 +598,22 @@
       #if defined(RVMODEL_MTIME_ADDRESS) && defined(RVMODEL_MTIMECMP_ADDRESS) && defined(RVMODEL_TIMER_INT_SOON_DELAY)
         LI(a2, RVMODEL_TIMER_INT_SOON_DELAY)
         #if UDB_MXLEN == 32
-          LA(a1, RVMODEL_MTIMECMP_ADDRESS)
+          LI(a1, RVMODEL_MTIMECMP_ADDRESS)
           li a2, -1
           RVTEST_TSBI_SWP4 // sw a2, 4(a1) // mtimecmp high word = all 1s so the split update cannot fire early
-          LA(a1, RVMODEL_MTIME_ADDRESS)
+          LI(a1, RVMODEL_MTIME_ADDRESS)
           LI(a2, RVMODEL_TIMER_INT_SOON_DELAY)
           RVTEST_TSBI_LW // lw a0, 0(a1) // read mtime low word
           add a2, a0, a2 // add delay to mtime low word
-          LA(a1, RVMODEL_MTIMECMP_ADDRESS)
+          LI(a1, RVMODEL_MTIMECMP_ADDRESS)
           RVTEST_TSBI_SW // sw a2, 0(a1) // write to mtimecmp low word
-          LA(a1, RVMODEL_MTIME_ADDRESS)
+          LI(a1, RVMODEL_MTIME_ADDRESS)
           RVTEST_TSBI_LWP4 // lw a0, 4(a1) // read mtime high word
           LI(a1, RVMODEL_TIMER_INT_SOON_DELAY)
           bgeu a2, a1, 1f // skip if didn't wrap
           addi a0, a0, 1 // increment mtime high word
           1:
-          LA(a1, RVMODEL_MTIMECMP_ADDRESS)
+          LI(a1, RVMODEL_MTIMECMP_ADDRESS)
           mv a2, a0 // Save mtimecmp high word
           RVTEST_TSBI_SWP4 // sw a2, 4(a1) // write to mtimecmp high word
         #else
@@ -690,7 +687,7 @@
     #ifdef SSTC_SUPPORTED
       rvtest_set_sstc_int_soon_s:
         #if defined(RVMODEL_MTIME_ADDRESS) && defined(RVMODEL_TIMER_INT_SOON_DELAY)
-          LA(a1, RVMODEL_MTIME_ADDRESS)
+          LI(a1, RVMODEL_MTIME_ADDRESS)
           LI(a2, RVMODEL_TIMER_INT_SOON_DELAY)
           #if UDB_MXLEN == 32
             li a0, -1
@@ -767,12 +764,12 @@
           #if UDB_MXLEN == 32
             li a1, -1
             RVTEST_TSBI_CSR_WRITE_A1(CSR_STIMECMPH) // stimecmp high word = all 1s so the split update cannot fire early
-            LA(a1, RVMODEL_MTIME_ADDRESS)
+            LI(a1, RVMODEL_MTIME_ADDRESS)
             RVTEST_TSBI_LW // lw a0, 0(a1) // read mtime low word
             add a2, a0, a2 // stimecmp low word = mtime low word + delay
             mv a1, a2
             RVTEST_TSBI_CSR_WRITE_A1(CSR_STIMECMP) // write low word of timer compare
-            LA(a1, RVMODEL_MTIME_ADDRESS)
+            LI(a1, RVMODEL_MTIME_ADDRESS)
             RVTEST_TSBI_LWP4 // lw a0, 4(a1) // read mtime high word
             LI(a1, RVMODEL_TIMER_INT_SOON_DELAY)
             bgeu a2, a1, 1f // skip if didn't wrap
@@ -781,7 +778,7 @@
             mv a1, a0
             RVTEST_TSBI_CSR_WRITE_A1(CSR_STIMECMPH) // write high word of timer compare
           #else
-            LA(a1, RVMODEL_MTIME_ADDRESS)
+            LI(a1, RVMODEL_MTIME_ADDRESS)
             RVTEST_TSBI_LD // ld a0, 0(a1) // read mtime
             add a1, a2, a0 // add delay to mtime
             RVTEST_TSBI_CSR_WRITE_A1(CSR_STIMECMP) // write timer compare
@@ -1244,7 +1241,7 @@
         sw t1, 4(t0)
       #elif !defined(RVTEST_SELFCHECK)
         // Sail always has a CLINT, and its mtimecmp resets to 0, so park it even if the DUT has no timer.
-        LI(t0, SAIL_MTIMECMP_ADDRESS)
+        LA(t0, SAIL_MTIMECMP_ADDRESS)
         addi t1, zero, -1
         sw t1, 0(t0)
         sw t1, 4(t0)

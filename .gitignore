@@ -30,13 +30,13 @@ work1/
 *.tar.gz
 results
 *.sh
+config/cores/wk/wk-rv64gc/patches/*.h
 
 # vector tests
 tests/rv32i/V*
 tests/rv32i/Zv*
 tests/rv64i/V*
 tests/rv64i/Zv*
-
 
 # priv tests
 tests/priv/headers
