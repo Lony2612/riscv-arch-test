@@ -13,7 +13,7 @@ implemented_extensions:
   - { name: D, version: "= 2.2.0" }
   - { name: C, version: "= 2.0" }
   - { name: B, version: "= 1.0.0" }
-  # - { name: V, version: "= 1.0.0" }
+  - { name: V, version: "= 1.0.0" }
   - { name: Za128rs, version: "= 1.0" }
   - { name: Ziccamoa, version: "= 1.0" }
   - { name: Ziccif, version: "= 1.0" }
@@ -32,14 +32,14 @@ implemented_extensions:
   - { name: Zalrsc, version: "= 1.0.0" }
   - { name: Zca, version: "= 1.0.0" }
   - { name: Zcd, version: "= 1.0.0" }
-  # - { name: Zve64d, version: "= 1.0.0" }
-  # - { name: Zvl128b, version: "= 1.0.0" }
-  # - { name: Zve64f, version: "= 1.0.0" }
-  # - { name: Zvl64b, version: "= 1.0.0" }
-  # - { name: Zve32f, version: "= 1.0.0" }
-  # - { name: Zve64x, version: "= 1.0.0" }
-  # - { name: Zve32x, version: "= 1.0.0" }
-  # - { name: Zvl32b, version: "= 1.0.0" }
+  - { name: Zve64d, version: "= 1.0.0" }
+  - { name: Zvl128b, version: "= 1.0.0" }
+  - { name: Zve64f, version: "= 1.0.0" }
+  - { name: Zvl64b, version: "= 1.0.0" }
+  - { name: Zve32f, version: "= 1.0.0" }
+  - { name: Zve64x, version: "= 1.0.0" }
+  - { name: Zve32x, version: "= 1.0.0" }
+  - { name: Zvl32b, version: "= 1.0.0" }
   - { name: Zfhmin, version: "= 1.0.0" }
   - { name: U, version: "= 1.0.0" }
   - { name: S, version: "= 1.11.0" }
@@ -84,33 +84,33 @@ params:
   # Zicntr params
   TIME_CSR_IMPLEMENTED: true
   # Vector params
-  # MUTABLE_MISA_V: false
-  # VLEN: 512
-  # ELEN: 64
-  # FOLLOW_VTYPE_RESET_RECOMMENDATION: true
-  # HW_MSTATUS_VS_DIRTY_UPDATE: precise
-  # RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX: VLMAX
-  # SEW_MIN: 8
-  # SUPPORT_FRACTIONAL_LMUL_BEYOND_REQUIRED: "no_unrequired_supported"
-  # VILL_SET_ON_RESERVED_VTYPE: true
-  # RESERVED_VSET_X0X0_VILL_SET: "always"
-  # RESERVED_VSET_X0X0_VLMAX_CHANGE: "always"
-  # VECTOR_LS_INDEX_MAX_EEW: "64"
-  # VECTOR_FF_UPDATE_PAST_TRIM: "update_none"
-  # VECTOR_FF_SEG_EXCEPTION_PARTIAL_LOAD: "no_subsegment_loaded"
-  # VECTOR_LS_MISALIGNED_LEGAL: true
-  # VECTOR_LOAD_PAST_TRAP: false
-  # VECTOR_LOAD_SEG_FF_OVERWRITE_ELEMENTS_AFTER_FAULT: "no_overwrite"
-  # VECTOR_LS_SEG_PARTIAL_ACCESS: false
-  # LEGAL_VSTART: "1_stride"
-  # VECTOR_LS_WHOLEREG_MISALIGNED_LEGAL: true
-  # VSSTATUS_VS_EXISTS: false
-  # VECTOR_FF_NO_EXCEPTION_TRIM: false
-  # VFREDUSUM_NAN: "no_change"
-  # VFREDUSUM_NODE_ROUNDING_BEHAVIOR: "SEW_precision"
-  # VFREDUSUM_INACTIVE_NODE_ELEMENT_BEHAVIOR: "additive_identity"
-  # VFREDUSUM_FINAL_NODE_ELEMENT_BEHAVIOR: "additive_identity"
-  # IMPRECISE_VECTOR_TRAP_SETTABLE: false
+  MUTABLE_MISA_V: false
+  VLEN: 512
+  ELEN: 64
+  FOLLOW_VTYPE_RESET_RECOMMENDATION: true
+  HW_MSTATUS_VS_DIRTY_UPDATE: precise
+  RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX: VLMAX
+  SEW_MIN: 8
+  SUPPORT_FRACTIONAL_LMUL_BEYOND_REQUIRED: "no_unrequired_supported"
+  VILL_SET_ON_RESERVED_VTYPE: true
+  RESERVED_VSET_X0X0_VILL_SET: "always"
+  RESERVED_VSET_X0X0_VLMAX_CHANGE: "always"
+  VECTOR_LS_INDEX_MAX_EEW: "64"
+  VECTOR_FF_UPDATE_PAST_TRIM: "update_none"
+  VECTOR_FF_SEG_EXCEPTION_PARTIAL_LOAD: "no_subsegment_loaded"
+  VECTOR_LS_MISALIGNED_LEGAL: true
+  VECTOR_LOAD_PAST_TRAP: false
+  VECTOR_LOAD_SEG_FF_OVERWRITE_ELEMENTS_AFTER_FAULT: "no_overwrite"
+  VECTOR_LS_SEG_PARTIAL_ACCESS: false
+  LEGAL_VSTART: "1_stride"
+  VECTOR_LS_WHOLEREG_MISALIGNED_LEGAL: true
+  VSSTATUS_VS_EXISTS: false
+  VECTOR_FF_NO_EXCEPTION_TRIM: false
+  VFREDUSUM_NAN: "no_change"
+  VFREDUSUM_NODE_ROUNDING_BEHAVIOR: "SEW_precision"
+  VFREDUSUM_INACTIVE_NODE_ELEMENT_BEHAVIOR: "additive_identity"
+  VFREDUSUM_FINAL_NODE_ELEMENT_BEHAVIOR: "additive_identity"
+  IMPRECISE_VECTOR_TRAP_SETTABLE: false
   MSTATUS_VS_LEGAL_VALUES: [0, 1, 2, 3]
   # U params
   MUTABLE_MISA_U: false

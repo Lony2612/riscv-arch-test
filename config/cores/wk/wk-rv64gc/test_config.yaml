@@ -1,11 +1,7 @@
 name: wk-rv64gc
 compiler_exe: /home/lony/tools/Xuantie-900-gcc-elf-newlib-x86_64-V3.3.0/bin/riscv64-unknown-elf-gcc # executable name on $PATH or full path to executable
-# compiler_exe: /home/lony/tools/riscv64-gcc-wrapper # executable name on $PATH or full path to executable
-# compiler_exe: riscv64-unknown-elf-gcc # executable name on $PATH or full path to executable
 objdump_exe: riscv64-unknown-elf-objdump # executable name on $PATH or full path to executable, optional
-# ref_model_exe: /home/lony/proj/ACT4/act4-wk-bak/tool/sail-riscv-Linux-x86_64-0.15/bin/sail_riscv_sim # executable name on $PATH or full path to executable
-ref_model_exe: /home/lony/tools/sail_riscv_sim_wrapper # executable name on $PATH or full path to executable
-# ref_model_exe: /home/lony/proj/sail-riscv-0.13.1/build/c_emulator/sail_riscv_sim
+ref_model_exe: /home/lony/tools/sail-riscv-Linux-x86_64-0.15/bin/sail_riscv_sim # executable name on $PATH or full path to executable
 udb_config: wk-rv64gc.yaml
 linker_script: link.ld
 dut_include_dir: . # Directory containing DUT specific rvmodel_macros.h header
