@@ -30,7 +30,7 @@ work1/
 *.tar.gz
 results
 *.sh
-config/cores/wk/wk-rv64gc/patches/*.h
+config/cores/wk/wk-rv64gc/patches/override_header/*
 
 # vector tests
 tests/rv32i/V*

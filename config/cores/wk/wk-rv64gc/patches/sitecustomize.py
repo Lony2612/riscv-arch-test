@@ -5,7 +5,7 @@ _here = os.path.dirname(os.path.abspath(__file__))
 if _here not in sys.path:
     sys.path.insert(0, _here)
 
-_repo = os.environ.get("ACT4_REPO_ROOT")
+_repo = os.path.abspath(os.getcwd())
 if _repo:
     _repo_abs = os.path.abspath(_repo)
     if _repo_abs not in sys.path:

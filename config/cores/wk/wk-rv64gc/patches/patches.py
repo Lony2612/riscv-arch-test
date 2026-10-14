@@ -24,7 +24,7 @@ if gen_rvtest_header.main() != 0:
 
 
 HERE = Path(__file__).resolve().parent
-OVERRIDES_DIR = HERE
+OVERRIDES_DIR = HERE / "override_header"
 INST_LIMIT = 2000000
 
 
