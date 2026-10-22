@@ -61,8 +61,7 @@ config/cores/wk/wk-rv64gc/
     └── override_header/           # generated; do not edit
         ├── riscv_arch_test.h
         ├── rvtest_setup.h
-        ├── rvtest_failure_code.h
-        └── test_setup.h
+        └── rvtest_failure_code.h
 ```
 
 `patches.py` is the single source of truth for all local modifications. Everything under
@@ -72,7 +71,6 @@ by hand.
 ## Building and running
 
 ```bash
-ACT4_REPO_ROOT=$PWD \
 PYTHONPATH=config/cores/wk/wk-rv64gc/patches:$PYTHONPATH \
 CONFIG_FILES=config/cores/wk/wk-rv64gc/test_config.yaml \
 make --jobs 12 EXTENSIONS=Sm,I DEBUG=true

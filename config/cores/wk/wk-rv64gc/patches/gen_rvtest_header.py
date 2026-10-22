@@ -116,13 +116,13 @@ def main() -> int:
 
     steps = (
         (act4_root / "tests/env/rvtest_failure_code.h",
-         out_dir / "rvtest_failure_code.h",
+         out_dir / "override_header/rvtest_failure_code.h",
          inject_rvtest_failure_code),
         (act4_root / "tests/env/rvtest_setup.h",
-         out_dir / "rvtest_setup.h",
+         out_dir / "override_header/rvtest_setup.h",
          inject_rvtest_setup),
         (act4_root / "tests/env/riscv_arch_test.h",
-         out_dir / "riscv_arch_test.h",
+         out_dir / "override_header/riscv_arch_test.h",
          inject_riscv_arch_test),
     )
 
